@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Cấu hình kết nối MySQL (khi nhóm tạo database trên phpMyAdmin thì sửa tên DB ở đây)
 define('DB_HOST', '127.0.0.1');
-define('DB_NAME', 'qldapm_nhom06');
+define('DB_NAME', 'database');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 
