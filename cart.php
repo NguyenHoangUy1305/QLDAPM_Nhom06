@@ -7,7 +7,7 @@ if (!isset($_SESSION['cart'])) {
 }
 
 $orderSuccess = false;
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $action = $_POST['action'] ?? '';
     $pid = (int)($_POST['product_id'] ?? 0);
 
