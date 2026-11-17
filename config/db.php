@@ -27,7 +27,7 @@ function getPDO(): ?PDO
         return null;
     }
 }
-
+// Hàm escape dữ liệu đầu vào để tránh lỗi XSS
 function e(string $str): string
 {
     return htmlspecialchars($str, ENT_QUOTES, 'UTF-8');
