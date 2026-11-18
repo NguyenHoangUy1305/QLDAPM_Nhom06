@@ -100,10 +100,25 @@ $cartCount = getCartCount();
                         <span class="hidden md:inline">Giỏ hàng</span>
                         <span id="cart-count" class="bg-gvn-red text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full"><?= (int)$cartCount ?></span>
                     </a>
-                    <button onclick="alert('Chức năng Đăng nhập đang được phát triển!')" class="bg-black hover:bg-neutral-800 text-white px-3 py-2 rounded-lg flex items-center gap-2 text-xs font-semibold transition">
-                        <i class="fa-regular fa-user text-sm"></i>
-                        <span class="hidden md:inline">Đăng nhập</span>
-                    </button>
+                    <!-- Phần hiển thị nút Đăng nhập / Tài khoản trên Header -->
+<div class="user-auth-section">
+    <?php if (isset($_SESSION['user'])): ?>
+        <!-- Nếu đã đăng nhập, hiển thị tên và nút Đăng xuất -->
+        <div class="dropdown d-inline-block">
+            <button class="btn text-white dropdown-toggle border-0 bg-transparent" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fa fa-user me-1"></i> Chào, <?= htmlspecialchars($_SESSION['user']['fullname']) ?>
+            </button>
+            <ul class="dropdown-menu">
+                <li><a class="dropdown-item text-danger" href="auths/logout.php"><i class="fa fa-sign-out-alt me-2"></i>Đăng xuất</a></li>
+            </ul>
+        </div>
+    <?php else: ?>
+        <!-- Nếu chưa đăng nhập, bấm vào sẽ trỏ thẳng sang trang login.php trong thư mục auths -->
+        <a href="auths/login.php" class="btn text-white text-decoration-none">
+            <i class="fa fa-user me-1"></i> Đăng nhập
+        </a>
+    <?php endif; ?>
+</div>
                 </div>
             </div>
         </div>

@@ -4,25 +4,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-/**
- * Hàm khởi tạo kết nối PDO đến CSDL MySQL
- */
-function getPDO(): PDO
-{
-    $host = 'localhost';
-    $dbname = 'database'; // Tên database bạn đã tạo
-    $username = 'root';
-    $password = ''; // Mật khẩu XAMPP/Laragon mặc định để trống
-    
-    try {
-        $conn = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
-        $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $conn->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        return $conn;
-    } catch (PDOException $e) {
-        die("Kết nối cơ sở dữ liệu thất bại: " . $e->getMessage());
-    }
-}
 
 /**
  * Lấy danh sách danh mục sản phẩm từ CSDL
