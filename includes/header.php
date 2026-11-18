@@ -77,14 +77,14 @@ $cartCount = getCartCount();
                             <div class="font-bold">0000.0000</div>
                         </div>
                     </a>
-                    <a href="#showroom" class="flex items-center gap-2 hover:opacity-90">
+                    <a href="info.php?page=showroom" class="flex items-center gap-2 hover:opacity-90">
                         <i class="fa-solid fa-location-dot text-lg"></i>
                         <div class="leading-tight">
                             <div class="opacity-85">Hệ thống</div>
                             <div class="font-bold">Showroom</div>
                         </div>
                     </a>
-                    <a href="#tra-cuu" class="flex items-center gap-2 hover:opacity-90">
+                    <a href="orders.php" class="flex items-center gap-2 hover:opacity-90">
                         <i class="fa-solid fa-file-invoice text-lg"></i>
                         <div class="leading-tight">
                             <div class="opacity-85">Tra cứu</div>
@@ -100,10 +100,22 @@ $cartCount = getCartCount();
                         <span class="hidden md:inline">Giỏ hàng</span>
                         <span id="cart-count" class="bg-gvn-red text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full"><?= (int)$cartCount ?></span>
                     </a>
-                    <button onclick="alert('Chức năng Đăng nhập đang được phát triển!')" class="bg-black hover:bg-neutral-800 text-white px-3 py-2 rounded-lg flex items-center gap-2 text-xs font-semibold transition">
-                        <i class="fa-regular fa-user text-sm"></i>
-                        <span class="hidden md:inline">Đăng nhập</span>
-                    </button>
+                    <?php if (!empty($_SESSION['user'])): ?>
+                        <div class="flex items-center gap-1.5">
+                            <a href="orders.php" class="bg-black hover:bg-neutral-800 text-white px-3 py-2 rounded-lg flex items-center gap-2 text-xs font-semibold transition">
+                                <i class="fa-regular fa-user text-sm"></i>
+                                <span class="hidden md:inline max-w-[110px] truncate"><?= e($_SESSION['user']['name']) ?></span>
+                            </a>
+                            <a href="logout.php" title="Đăng xuất" class="bg-black/70 hover:bg-black text-white px-2.5 py-2 rounded-lg text-xs transition">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                            </a>
+                        </div>
+                    <?php else: ?>
+                        <a href="login.php" class="bg-black hover:bg-neutral-800 text-white px-3 py-2 rounded-lg flex items-center gap-2 text-xs font-semibold transition">
+                            <i class="fa-regular fa-user text-sm"></i>
+                            <span class="hidden md:inline">Đăng nhập</span>
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -137,16 +149,16 @@ $cartCount = getCartCount();
                     <a href="collection.php?cat=all" class="hover:text-gvn-red flex items-center gap-1.5 transition">
                         <i class="fa-solid fa-tags text-gvn-red"></i> Tất cả khuyến mãi
                     </a>
-                    <a href="index.php#news-section" class="hover:text-gvn-red flex items-center gap-1.5 transition">
+                    <a href="news.php" class="hover:text-gvn-red flex items-center gap-1.5 transition">
                         <i class="fa-regular fa-newspaper text-gray-500"></i> Tin tức - Review
                     </a>
-                    <a href="#bao-hanh" class="hover:text-gvn-red flex items-center gap-1.5 transition">
+                    <a href="info.php?page=bao-hanh" class="hover:text-gvn-red flex items-center gap-1.5 transition">
                         <i class="fa-solid fa-shield-halved text-gray-500"></i> Tra Cứu Bảo Hành
                     </a>
-                    <a href="#dich-vu" class="hover:text-gvn-red flex items-center gap-1.5 transition">
+                    <a href="info.php?page=dich-vu" class="hover:text-gvn-red flex items-center gap-1.5 transition">
                         <i class="fa-solid fa-screwdriver-wrench text-gray-500"></i> Dịch vụ tận nhà
                     </a>
-                    <a href="#thu-cu" class="hover:text-gvn-red flex items-center gap-1.5 transition">
+                    <a href="info.php?page=thu-cu" class="hover:text-gvn-red flex items-center gap-1.5 transition">
                         <i class="fa-solid fa-rotate text-gray-500"></i> Thu cũ đổi mới
                     </a>
                     <a href="collection.php?cat=pc-gvn" class="hover:text-gvn-red flex items-center gap-1.5 font-semibold text-gvn-red transition">

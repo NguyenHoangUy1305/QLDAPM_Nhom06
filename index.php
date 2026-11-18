@@ -209,12 +209,12 @@ $news = getNews();
     <section id="news-section" class="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">
         <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
             <h2 class="text-lg sm:text-xl font-extrabold text-gray-900 uppercase">Cập nhật Tin Tức Công Nghệ</h2>
-            <a href="#" class="text-xs font-bold text-gvn-red hover:underline">Xem tất cả <i class="fa-solid fa-chevron-right"></i></a>
+            <a href="news.php" class="text-xs font-bold text-gvn-red hover:underline">Xem tất cả <i class="fa-solid fa-chevron-right"></i></a>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
             <?php if (!empty($news[0])): ?>
-                <a href="#" class="lg:col-span-6 group block">
+                <a href="news.php?id=0" class="lg:col-span-6 group block">
                     <div class="rounded-xl overflow-hidden aspect-video mb-3">
                         <img src="<?= e($news[0]['image']) ?>" alt="<?= e($news[0]['title']) ?>" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
                     </div>
@@ -224,8 +224,8 @@ $news = getNews();
             <?php endif; ?>
 
             <div class="lg:col-span-6 flex flex-col gap-3">
-                <?php foreach (array_slice($news, 1) as $item): ?>
-                    <a href="#" class="flex gap-3 group items-start">
+                <?php foreach (array_slice($news, 1) as $idx => $item): ?>
+                    <a href="news.php?id=<?= $idx + 1 ?>" class="flex gap-3 group items-start">
                         <div class="w-32 sm:w-40 aspect-video rounded-lg overflow-hidden shrink-0">
                             <img src="<?= e($item['image']) ?>" alt="<?= e($item['title']) ?>" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
                         </div>
