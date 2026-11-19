@@ -3,7 +3,7 @@ require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/data/store.php';
 
 if (!isset($_SESSION['cart'])) {
-    $_SESSION['cart'] = [1 => 1, 4 => 1];
+    $_SESSION['cart'] = [];
 }
 
 $cartItems = [];
@@ -64,15 +64,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($cartItems)) {
         if ($pdo) {
             try {
                 $pdo->beginTransaction();
-                $stmt = $pdo->prepare('INSERT INTO orders (user_id, customer_name, phone, address, total_price, status, created_at) VALUES (?, ?, ?, ?, ?, ?, NOW())');
-                $stmt->execute([$user['id'] ?? null, $customerName, $phone, $address, $total, 'Chờ xác nhận']);
+                $stmt = $pdo->prepare('INSERT INTO orders (user_id, customer_name, phone, address, payment_method, note, total_price, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())');
+                $stmt->execute([$user['id'] ?? null, $customerName, $phone, $address, $paymentMethod, $note, $total, 'Chờ xác nhận']);
                 $dbOrderId = (int)$pdo->lastInsertId();
                 $orderData['id'] = $dbOrderId;
                 $orderData['code'] = 'DH' . str_pad((string)$dbOrderId, 5, '0', STR_PAD_LEFT);
 
-                $itemStmt = $pdo->prepare('INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)');
+                $itemStmt = $pdo->prepare('INSERT INTO order_items (order_id, product_id, product_name, quantity, price) VALUES (?, ?, ?, ?, ?)');
+                $stockStmt = $pdo->prepare('UPDATE products SET stock = GREATEST(0, stock - ?) WHERE id = ?');
                 foreach ($cartItems as $item) {
-                    $itemStmt->execute([$dbOrderId, $item['product']['id'], $item['qty'], $item['product']['price']]);
+                    $itemStmt->execute([$dbOrderId, $item['product']['id'], $item['product']['name'], $item['qty'], $item['product']['price']]);
+                    $stockStmt->execute([$item['qty'], $item['product']['id']]);
                 }
                 $pdo->commit();
             } catch (PDOException $e) {
