@@ -31,7 +31,12 @@ require_once __DIR__ . '/includes/header.php';
             <div class="flex items-center gap-3 text-xs text-gray-500 mb-4">
                 <span>Thương hiệu: <strong class="text-gvn-red"><?= e($product['brand']) ?></strong></span>
                 <span>|</span>
-                <span class="text-emerald-600 font-semibold"><i class="fa-solid fa-circle-check"></i> Còn hàng</span>
+                <?php $stock = (int)($product['stock'] ?? 20); ?>
+                <?php if ($stock > 0): ?>
+                    <span class="text-emerald-600 font-semibold"><i class="fa-solid fa-circle-check"></i> Còn hàng (<?= $stock ?> sản phẩm)</span>
+                <?php else: ?>
+                    <span class="text-red-600 font-semibold"><i class="fa-solid fa-circle-xmark"></i> Tạm hết hàng</span>
+                <?php endif; ?>
             </div>
 
             <div class="bg-gray-50 rounded-xl p-4 mb-4 flex items-baseline gap-3">

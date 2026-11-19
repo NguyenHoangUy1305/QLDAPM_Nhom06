@@ -26,7 +26,15 @@ if ($pdo) {
 
         if (!empty($dbOrders)) {
             $orders = [];
+            $itemStmt = $pdo->prepare('
+                SELECT oi.quantity AS qty, oi.price, COALESCE(oi.product_name, p.name, "Sản phẩm") AS name
+                FROM order_items oi
+                LEFT JOIN products p ON p.id = oi.product_id
+                WHERE oi.order_id = ?
+            ');
             foreach ($dbOrders as $o) {
+                $itemStmt->execute([$o['id']]);
+                $dbItems = $itemStmt->fetchAll();
                 $orders[] = [
                     'id' => $o['id'],
                     'code' => 'DH' . str_pad((string)$o['id'], 5, '0', STR_PAD_LEFT),
@@ -36,7 +44,7 @@ if ($pdo) {
                     'total_price' => $o['total_price'],
                     'status' => $o['status'],
                     'created_at' => $o['created_at'],
-                    'items' => [],
+                    'items' => $dbItems ?: [],
                 ];
             }
         }

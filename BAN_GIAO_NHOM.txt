@@ -1,86 +1,47 @@
 ====================================================================
-TỔNG HỢP BÀN GIAO DỰ ÁN - ĐOÀN 6 (PHP THUẦN)
+TỔNG HỢP TRẠNG THÁI DỰ ÁN - ĐOÀN 6 (PHP THUẦN + MYSQL)
 ====================================================================
 
-1. NHỮNG GÌ ĐỒ ÁN ĐÃ CÓ (CHẠY NGAY TRÊN XAMPP - http://localhost/qldapm/)
+1. NHỮNG GÌ ĐÃ HOÀN THIỆN & NỐI MẠCH 100% (MỤC 1 -> 4)
 --------------------------------------------------------------------
-- Giao diện (Frontend) hoàn chỉnh theo mẫu thương mại điện tử công nghệ:
-  + includes/header.php & includes/footer.php:
-    * Header 2 tầng sticky, Mega Menu "DANH MỤC" (16 nhóm ngành hàng).
-    * Thanh tìm kiếm sản phẩm, badge đếm số lượng giỏ hàng động.
-    * Footer 5 cột và nút nổi (Hotline 0000.0000, Zalo, Lên đầu trang).
-  + includes/product-card.php:
-    * Card sản phẩm dùng chung: badge giảm giá, badge HỎA TỐC, chip thông số
-      cấu hình, giá cũ/mới, thanh tiến độ Flash Sale, hộp quà tặng.
-  + index.php (Trang chủ):
-    * Hero Carousel tự chuyển + nút điều hướng, Sidebar danh mục.
-    * Thanh lối tắt danh mục, Flash Sale đếm ngược thời gian thực (JS).
-    * Các khu vực PC bán chạy, Laptop Gaming (có tab lọc), Màn hình & Gear,
-      Tin tức công nghệ.
-  + collection.php:
-    * Trang danh mục (?cat=...) và tìm kiếm từ khóa (?q=...).
-  + product.php:
-    * Trang chi tiết sản phẩm, thông số, quà tặng, sản phẩm tương tự,
-      nút Thêm vào giỏ / Mua ngay.
-- Giỏ hàng chạy thật bằng Session (cart.php):
-  + Thêm sản phẩm, tăng/giảm số lượng, xóa sản phẩm, tính tổng tiền qua $_SESSION['cart'].
-- Nền tảng kết nối & dữ liệu mẫu:
-  + config/db.php: Kết nối MySQL bằng PDO (getPDO()), hàm e() chống XSS, formatPrice().
-  + data/store.php: 16 danh mục, 15 sản phẩm mẫu, 4 bài tin tức.
-  + assets/images/: 22 hình ảnh banner, sản phẩm, tin tức đã tải sẵn về local.
+[x] Giao diện người dùng & chức năng mua hàng (index.php, collection.php,
+    product.php, cart.php, checkout.php, orders.php, login.php, register.php,
+    logout.php, news.php, info.php).
+[x] CSDL MySQL (database.sql) đầy đủ 6 bảng:
+    - categories, products (có cột stock tồn kho), news
+    - users (kèm sẵn tài khoản Admin & User mẫu)
+    - orders, order_items (kèm sẵn 2 đơn hàng mẫu)
+[x] Kết nối MySQL 2 chiều trong data/store.php:
+    - Tự động đọc sản phẩm, danh mục, tin tức từ MySQL (có fallback an toàn
+      sang Session nếu chưa bật MySQL).
+[x] Trang Quản trị Admin (admin/) đồng bộ trực tiếp với Trang khách hàng:
+    - admin/login.php (admin@doan6.local / admin123)
+    - admin/index.php (Thống kê doanh thu, đơn hàng, sản phẩm, danh mục)
+    - admin/products.php (Thêm / Sửa / Xóa sản phẩm + tồn kho + upload ảnh ->
+      lưu thẳng vào bảng products trong MySQL & hiện ngay ngoài trang chủ)
+    - admin/categories.php (Thêm / Xóa danh mục -> lưu thẳng vào bảng categories)
+    - admin/orders.php (Xem chi tiết các món trong đơn, đổi trạng thái đơn ->
+      lưu thẳng vào bảng orders)
+[x] Tự động trừ tồn kho (stock) khi khách đặt hàng ở checkout.php; hiển thị
+    chi tiết các món đã mua (order_items) ở cả orders.php và admin/orders.php;
+    giỏ hàng mặc định khởi tạo rỗng [].
 
 
-2. NHỮNG GÌ CÒN THIẾU / CẦN BỔ SUNG
+2. GHI CHÚ MỤC 5 - CÁC TÍNH NĂNG NÂNG CAO ĐỂ LÀM SAU (TODO / HƯỚNG PHÁT TRIỂN)
 --------------------------------------------------------------------
-A. Dọn dẹp file Laravel cũ (nếu nhóm chốt 100% PHP thuần):
-   - Xóa các thư mục/file thừa của Laravel (app/, bootstrap/, resources/,
-     routes/, vendor/, public/, artisan, composer.json, composer.phar,
-     start-server.bat) để tránh nhầm lẫn. Chỉ giữ bộ PHP thuần, docs/, README.md.
+[ ] 5.1. Bảo mật nâng cao:
+    - Thêm CSRF Token cho toàn bộ các form POST (login, register, cart, checkout, admin).
+    - Kiểm tra MIME type thực tế (finfo_file) và giới hạn dung lượng (<= 2MB) khi upload ảnh.
+    - Giới hạn số lần đăng nhập sai (Rate Limiting).
 
-B. Thiết kế Database MySQL (database.sql) & kết nối thật:
-   - Hiện dữ liệu đang lấy từ mảng tĩnh trong data/store.php và đặt hàng ở
-     cart.php chưa lưu xuống DB.
-   - Cần tạo file database.sql (import vào phpMyAdmin) với các bảng:
-     * users (id, name, email, password, phone, address, role, created_at)
-     * categories (id, name, slug, icon)
-     * products (id, category_id, name, slug, brand, image, old_price, price,
-                 discount, specs, promo, stock, is_flash_sale)
-     * orders (id, user_id, customer_name, phone, address, total_price, status, created_at)
-     * order_items (id, order_id, product_id, quantity, price)
-   - Cập nhật các hàm trong data/store.php sang truy vấn MySQL bằng getPDO().
+[ ] 5.2. Nghiệp vụ tài khoản & đơn hàng phía khách:
+    - Trang Hồ sơ cá nhân (profile.php): cho phép khách đổi mật khẩu, cập nhật SĐT/địa chỉ.
+    - Cho phép khách tự bấm "Hủy đơn hàng" khi đơn đang ở trạng thái "Chờ xác nhận".
+    - Chức năng Quên mật khẩu / Gửi email xác nhận đơn hàng (PHPMailer / SMTP).
 
-C. Chức năng phía người dùng (Frontend + Backend):
-   - Đăng nhập / Đăng ký (login.php, register.php, logout.php):
-     Hiện nút Đăng nhập trên header mới hiện alert(). Cần làm form + xử lý
-     password_hash() / password_verify() và lưu $_SESSION['user'].
-   - Thanh toán (checkout.php):
-     Form nhập họ tên, SĐT, địa chỉ, phương thức thanh toán và lưu đơn vào
-     bảng orders + order_items.
-   - Tra cứu / Lịch sử đơn hàng (orders.php):
-     Gắn vào nút "Tra cứu đơn hàng" trên header (hiện đang là #tra-cuu).
-   - Bộ lọc & Sắp xếp ở collection.php:
-     Lọc theo khoảng giá, lọc theo hãng, sắp xếp giá tăng/giảm, phân trang.
-   - Hoàn thiện các trang/link tĩnh (#):
-     Chi tiết tin tức (news.php), giới thiệu, bảo hành, showroom.
-
-D. Trang Quản trị Admin (admin/):
-   - Đăng nhập phân quyền (role = 'admin').
-   - Quản lý Sản phẩm (Thêm / Sửa / Xóa + upload ảnh vào assets/images/products/).
-   - Quản lý Danh mục & Quản lý Đơn hàng (xem chi tiết, đổi trạng thái:
-     Chờ xác nhận -> Đang giao -> Hoàn thành / Hủy).
-   - Thống kê cơ bản (tổng đơn hàng, doanh thu).
-
-
-3. GỢI Ý CHIA VIỆC CHO NHÓM (4 THÀNH VIÊN)
---------------------------------------------------------------------
-- Thành viên 1 (DB & Core):
-  Thiết kế database.sql, chuyển data/store.php sang đọc dữ liệu từ MySQL (PDO),
-  dọn các file Laravel thừa.
-- Thành viên 2 (Auth & Tài khoản):
-  Làm login.php, register.php, logout.php, orders.php (lịch sử & tra cứu đơn hàng).
-- Thành viên 3 (Mua hàng & Lọc sản phẩm):
-  Làm checkout.php (lưu đơn vào DB), nâng cấp bộ lọc giá/hãng/sắp xếp/phân trang
-  cho collection.php.
-- Thành viên 4 (Admin):
-  Làm thư mục admin/ (CRUD sản phẩm, danh mục, duyệt đơn hàng, thống kê).
+[ ] 5.3. Tính năng thương mại điện tử mở rộng:
+    - Mã giảm giá / Voucher (bảng coupons: mã code, % giảm, ngày hết hạn).
+    - Bình luận & Đánh giá sao (1-5 sao) cho từng sản phẩm (bảng reviews).
+    - Tích hợp thanh toán QR VietQR / cổng VNPay hoặc MoMo Sandbox.
+    - Quản lý bài viết Tin tức trong Admin (admin/news.php - CRUD bảng news).
 ====================================================================

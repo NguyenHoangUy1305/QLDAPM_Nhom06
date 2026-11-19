@@ -1,6 +1,38 @@
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-function getCategories(): array
+/**
+ * Chuẩn hóa 1 dòng sản phẩm từ MySQL sang cấu trúc mảng dùng trên giao diện
+ */
+function normalizeProductRow(array $p): array
+{
+    $specs = $p['specs'] ?? [];
+    if (is_string($specs)) {
+        $specs = $specs !== '' ? array_map('trim', explode(',', $specs)) : [];
+    }
+    return [
+        'id' => (int)$p['id'],
+        'slug' => (string)$p['slug'],
+        'name' => (string)$p['name'],
+        'category' => (string)($p['category'] ?? $p['category_slug'] ?? 'laptop'),
+        'brand' => (string)($p['brand'] ?? 'ACER'),
+        'image' => (string)($p['image'] ?? 'assets/images/products/laptop1.jpg'),
+        'old_price' => (int)round((float)($p['old_price'] ?? 0)),
+        'price' => (int)round((float)($p['price'] ?? 0)),
+        'discount' => (int)($p['discount'] ?? 0),
+        'fast_delivery' => (bool)($p['fast_delivery'] ?? true),
+        'specs' => $specs,
+        'promo' => (string)($p['promo'] ?? ''),
+        'sold_percent' => (int)($p['sold_percent'] ?? 0),
+        'sold_text' => (string)($p['sold_text'] ?? ''),
+        'flash_sale' => (bool)($p['flash_sale'] ?? false),
+        'stock' => isset($p['stock']) ? (int)$p['stock'] : 20,
+    ];
+}
+
+function getDefaultCategories(): array
 {
     return [
         ['name' => 'Laptop', 'slug' => 'laptop', 'icon' => 'fa-laptop'],
@@ -22,7 +54,7 @@ function getCategories(): array
     ];
 }
 
-function getAllProducts(): array
+function getDefaultProducts(): array
 {
     return [
         [
@@ -41,6 +73,7 @@ function getAllProducts(): array
             'sold_percent' => 82,
             'sold_text' => 'Đã bán 41/50 suất',
             'flash_sale' => true,
+            'stock' => 9,
         ],
         [
             'id' => 2,
@@ -58,6 +91,7 @@ function getAllProducts(): array
             'sold_percent' => 65,
             'sold_text' => 'Đã bán 13/20 suất',
             'flash_sale' => true,
+            'stock' => 7,
         ],
         [
             'id' => 3,
@@ -75,6 +109,7 @@ function getAllProducts(): array
             'sold_percent' => 90,
             'sold_text' => 'Sắp hết suất',
             'flash_sale' => true,
+            'stock' => 5,
         ],
         [
             'id' => 4,
@@ -92,6 +127,7 @@ function getAllProducts(): array
             'sold_percent' => 55,
             'sold_text' => 'Đã bán 22/40 suất',
             'flash_sale' => true,
+            'stock' => 18,
         ],
         [
             'id' => 5,
@@ -109,6 +145,7 @@ function getAllProducts(): array
             'sold_percent' => 70,
             'sold_text' => 'Đã bán 14/20 suất',
             'flash_sale' => true,
+            'stock' => 6,
         ],
         [
             'id' => 6,
@@ -124,6 +161,7 @@ function getAllProducts(): array
             'specs' => ['i3-12100F', 'GTX 1650', '16GB RAM', '256GB SSD'],
             'promo' => 'Tặng bộ Phím Chuột Gaming trị giá 500K',
             'flash_sale' => false,
+            'stock' => 15,
         ],
         [
             'id' => 7,
@@ -139,6 +177,7 @@ function getAllProducts(): array
             'specs' => ['i7-14700K', 'RTX 4070S', '32GB DDR5', '1TB NVMe'],
             'promo' => 'Tặng Tản nhiệt nước AIO 360mm',
             'flash_sale' => false,
+            'stock' => 8,
         ],
         [
             'id' => 8,
@@ -154,6 +193,7 @@ function getAllProducts(): array
             'specs' => ['Ryzen 5 7600', 'RTX 4060Ti', '32GB DDR5', '500GB SSD'],
             'promo' => 'Hỗ trợ trả góp 0% lãi suất',
             'flash_sale' => false,
+            'stock' => 12,
         ],
         [
             'id' => 9,
@@ -169,6 +209,7 @@ function getAllProducts(): array
             'specs' => ['i5-12500H', 'RTX 3050', '16GB RAM', '512GB SSD', '144Hz'],
             'promo' => 'Tặng Combo Gear ASUS trị giá 1.5 triệu',
             'flash_sale' => false,
+            'stock' => 20,
         ],
         [
             'id' => 10,
@@ -184,6 +225,7 @@ function getAllProducts(): array
             'specs' => ['i7-13620H', 'RTX 4050', '16GB DDR5', '512GB SSD'],
             'promo' => 'Tặng Balo MSI Gaming + Chuột',
             'flash_sale' => false,
+            'stock' => 14,
         ],
         [
             'id' => 11,
@@ -199,6 +241,7 @@ function getAllProducts(): array
             'specs' => ['i5-12450HX', 'RTX 3050 6GB', '16GB RAM', '100% sRGB'],
             'promo' => 'Tặng Balo Lenovo Gaming',
             'flash_sale' => false,
+            'stock' => 16,
         ],
         [
             'id' => 12,
@@ -214,6 +257,7 @@ function getAllProducts(): array
             'specs' => ['i5-13500H', '16GB RAM', '512GB SSD', '15.6" OLED'],
             'promo' => 'Giảm thêm 1 Triệu cho HSSV',
             'flash_sale' => false,
+            'stock' => 22,
         ],
         [
             'id' => 13,
@@ -229,6 +273,7 @@ function getAllProducts(): array
             'specs' => ['Core Ultra 5', 'AI Boost', '16GB RAM', '14" OLED'],
             'promo' => 'Tặng chuột không dây Lenovo',
             'flash_sale' => false,
+            'stock' => 11,
         ],
         [
             'id' => 14,
@@ -244,6 +289,7 @@ function getAllProducts(): array
             'specs' => ['27 inch', '2K QHD', 'Fast IPS', '180Hz', '1ms'],
             'promo' => 'Bảo hành 3 năm chính hãng',
             'flash_sale' => false,
+            'stock' => 19,
         ],
         [
             'id' => 15,
@@ -259,12 +305,67 @@ function getAllProducts(): array
             'specs' => ['53mm Driver', 'DTS:X', 'Mic chống ồn', 'USB-C/3.5mm'],
             'promo' => 'Tặng giá treo tai nghe Gaming',
             'flash_sale' => false,
+            'stock' => 30,
         ],
     ];
 }
 
+/**
+ * Lấy danh sách danh mục: ưu tiên đọc từ MySQL, fallback sang Session Admin hoặc mặc định
+ */
+function getCategories(): array
+{
+    $pdo = getPDO();
+    if ($pdo) {
+        try {
+            $stmt = $pdo->query("SELECT id, name, slug, icon FROM categories ORDER BY id ASC");
+            $rows = $stmt->fetchAll();
+            if (!empty($rows)) {
+                return $rows;
+            }
+        } catch (PDOException $e) {
+            // Fallback bên dưới
+        }
+    }
+    return $_SESSION['admin_categories'] ?? getDefaultCategories();
+}
+
+/**
+ * Lấy toàn bộ sản phẩm: ưu tiên đọc từ MySQL, fallback sang Session Admin hoặc mặc định
+ */
+function getAllProducts(): array
+{
+    $pdo = getPDO();
+    if ($pdo) {
+        try {
+            $stmt = $pdo->query("SELECT * FROM products ORDER BY id DESC");
+            $rows = $stmt->fetchAll();
+            if (!empty($rows)) {
+                return array_map('normalizeProductRow', $rows);
+            }
+        } catch (PDOException $e) {
+            // Fallback bên dưới
+        }
+    }
+    return $_SESSION['admin_products'] ?? getDefaultProducts();
+}
+
+/**
+ * Lấy tin tức: ưu tiên đọc từ MySQL
+ */
 function getNews(): array
 {
+    $pdo = getPDO();
+    if ($pdo) {
+        try {
+            $stmt = $pdo->query("SELECT id, title, summary, image, date FROM news ORDER BY id ASC");
+            $rows = $stmt->fetchAll();
+            if (!empty($rows)) {
+                return $rows;
+            }
+        } catch (PDOException $e) {
+        }
+    }
     return [
         [
             'title' => 'Đánh giá RTX 4060 vs RTX 4060 Ti: Card đồ họa nào đáng mua nhất 2026?',
@@ -295,26 +396,56 @@ function getNews(): array
 
 function getProductBySlug(string $slug): array
 {
-    foreach (getAllProducts() as $p) {
+    $pdo = getPDO();
+    if ($pdo && $slug !== '') {
+        try {
+            $stmt = $pdo->prepare("SELECT * FROM products WHERE slug = :slug LIMIT 1");
+            $stmt->execute(['slug' => $slug]);
+            $p = $stmt->fetch();
+            if ($p) {
+                return normalizeProductRow($p);
+            }
+        } catch (PDOException $e) {
+        }
+    }
+
+    $all = getAllProducts();
+    foreach ($all as $p) {
         if ($p['slug'] === $slug) {
             return $p;
         }
     }
-    return getAllProducts()[0];
+    return $all[0] ?? [];
 }
 
 function getProductById(int $id): ?array
 {
+    $pdo = getPDO();
+    if ($pdo && $id > 0) {
+        try {
+            $stmt = $pdo->prepare("SELECT * FROM products WHERE id = :id LIMIT 1");
+            $stmt->execute(['id' => $id]);
+            $p = $stmt->fetch();
+            if ($p) {
+                return normalizeProductRow($p);
+            }
+        } catch (PDOException $e) {
+        }
+    }
+
     foreach (getAllProducts() as $p) {
-        if ($p['id'] === $id) {
+        if ((int)$p['id'] === $id) {
             return $p;
         }
     }
     return null;
 }
 
+/**
+ * Lấy tổng số lượng sản phẩm trong giỏ hàng (mặc định giỏ rỗng [])
+ */
 function getCartCount(): int
 {
-    $cart = $_SESSION['cart'] ?? [1 => 1, 4 => 1];
+    $cart = $_SESSION['cart'] ?? [];
     return array_sum($cart);
 }

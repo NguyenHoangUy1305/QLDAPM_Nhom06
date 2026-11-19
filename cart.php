@@ -3,7 +3,7 @@ require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/data/store.php';
 
 if (!isset($_SESSION['cart'])) {
-    $_SESSION['cart'] = [1 => 1, 4 => 1];
+    $_SESSION['cart'] = [];
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
