@@ -6,19 +6,14 @@ if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [1 => 1, 4 => 1];
 }
 
-$orderSuccess = false;
-if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $pid = (int)($_POST['product_id'] ?? 0);
 
     if ($action === 'add' && $pid > 0) {
         $_SESSION['cart'][$pid] = ($_SESSION['cart'][$pid] ?? 0) + 1;
-        header('Location: cart.php');
-        exit;
     } elseif ($action === 'inc' && $pid > 0) {
         $_SESSION['cart'][$pid] = ($_SESSION['cart'][$pid] ?? 0) + 1;
-        header('Location: cart.php');
-        exit;
     } elseif ($action === 'dec' && $pid > 0) {
         if (isset($_SESSION['cart'][$pid])) {
             $_SESSION['cart'][$pid]--;
@@ -26,16 +21,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 unset($_SESSION['cart'][$pid]);
             }
         }
-        header('Location: cart.php');
-        exit;
     } elseif ($action === 'remove' && $pid > 0) {
         unset($_SESSION['cart'][$pid]);
-        header('Location: cart.php');
-        exit;
-    } elseif ($action === 'checkout') {
-        $_SESSION['cart'] = [];
-        $orderSuccess = true;
     }
+    header('Location: cart.php');
+    exit;
 }
 
 $cartItems = [];
@@ -53,14 +43,7 @@ require_once __DIR__ . '/includes/header.php';
 <div class="max-w-[960px] mx-auto px-3 py-6">
     <h1 class="text-xl font-extrabold text-gray-900 uppercase mb-4">Giỏ hàng của bạn</h1>
 
-    <?php if ($orderSuccess): ?>
-        <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl p-6 text-center shadow-sm">
-            <i class="fa-solid fa-circle-check text-4xl text-emerald-500 mb-3"></i>
-            <h2 class="text-lg font-extrabold mb-1">Đặt hàng thành công!</h2>
-            <p class="text-sm mb-4">Cảm ơn bạn đã mua sắm tại ĐOÀN 6. Nhân viên sẽ liên hệ qua số 0000.0000 để xác nhận đơn hàng.</p>
-            <a href="index.php" class="inline-block bg-gvn-red text-white font-bold px-6 py-2.5 rounded-xl text-sm hover:bg-gvn-redHover transition">Tiếp tục mua sắm</a>
-        </div>
-    <?php elseif (empty($cartItems)): ?>
+    <?php if (empty($cartItems)): ?>
         <div class="bg-white rounded-2xl border border-gray-200 p-8 text-center shadow-sm">
             <i class="fa-solid fa-cart-shopping text-4xl text-gray-300 mb-3"></i>
             <p class="text-sm text-gray-500 mb-4">Giỏ hàng của bạn đang trống.</p>
@@ -111,12 +94,9 @@ require_once __DIR__ . '/includes/header.php';
                     <span class="text-sm text-gray-600">Tổng tiền tạm tính:</span>
                     <span class="text-2xl font-extrabold text-gvn-red ml-2"><?= formatPrice($total) ?></span>
                 </div>
-                <form method="POST" action="cart.php">
-                    <input type="hidden" name="action" value="checkout">
-                    <button type="submit" class="w-full sm:w-auto bg-gvn-red hover:bg-gvn-redHover text-white font-extrabold px-8 py-3.5 rounded-xl uppercase tracking-wide transition shadow-md">
-                        ĐẶT HÀNG NGAY
-                    </button>
-                </form>
+                <a href="checkout.php" class="w-full sm:w-auto text-center bg-gvn-red hover:bg-gvn-redHover text-white font-extrabold px-8 py-3.5 rounded-xl uppercase tracking-wide transition shadow-md">
+                    TIẾN HÀNH ĐẶT HÀNG
+                </a>
             </div>
         </div>
     <?php endif; ?>
