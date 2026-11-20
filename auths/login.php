@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'id' => $user['id'],
                 'fullname' => $user['fullname'],
                 'email' => $user['email'],
-                'phone' => $user['phone'], 
+                'phone' => $user['phone'],
                 'role' => $user['role']
             ];
 
