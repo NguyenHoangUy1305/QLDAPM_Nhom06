@@ -101,12 +101,16 @@ $cartCount = getCartCount();
                         <span id="cart-count" class="bg-gvn-red text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full"><?= (int)$cartCount ?></span>
                     </a>
                     <?php if (!empty($_SESSION['user'])): ?>
+                        <?php
+                        $displayName = $_SESSION['user']['name'] ?? $_SESSION['user']['fullname'] ?? 'Người dùng';
+                        $logoutUrl = isset($_SESSION['user']['name']) ? 'logout.php' : 'auths/logout.php';
+                        ?>
                         <div class="flex items-center gap-1.5">
                             <a href="orders.php" class="bg-black hover:bg-neutral-800 text-white px-3 py-2 rounded-lg flex items-center gap-2 text-xs font-semibold transition">
                                 <i class="fa-regular fa-user text-sm"></i>
-                                <span class="hidden md:inline max-w-[110px] truncate"><?= e($_SESSION['user']['name']) ?></span>
+                                <span class="hidden md:inline max-w-[110px] truncate"><?= e($displayName) ?></span>
                             </a>
-                            <a href="logout.php" title="Đăng xuất" class="bg-black/70 hover:bg-black text-white px-2.5 py-2 rounded-lg text-xs transition">
+                            <a href="<?= e($logoutUrl) ?>" title="Đăng xuất" class="bg-black/70 hover:bg-black text-white px-2.5 py-2 rounded-lg text-xs transition">
                                 <i class="fa-solid fa-right-from-bracket"></i>
                             </a>
                         </div>

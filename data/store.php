@@ -1,5 +1,4 @@
 <?php
-
 function getCategories(): array
 {
     return [
