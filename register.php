@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($check->fetch()) {
                     $error = 'Email này đã được đăng ký.';
                 } else {
-                    $stmt = $pdo->prepare('INSERT INTO users (name, email, phone, password, role, created_at) VALUES (?, ?, ?, ?, ?, NOW())');
+                    $stmt = $pdo->prepare('INSERT INTO users (fullname, email, phone, password, role, created_at) VALUES (?, ?, ?, ?, ?, NOW())');
                     $stmt->execute([$name, $email, $phone, $hashed, 'user']);
                     $newId = (int)$pdo->lastInsertId();
                     $_SESSION['user'] = [

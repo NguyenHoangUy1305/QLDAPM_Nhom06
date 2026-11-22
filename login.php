@@ -23,10 +23,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo = getPDO();
         if ($pdo) {
             try {
-                $stmt = $pdo->prepare('SELECT id, name, email, phone, address, password, role FROM users WHERE email = ? LIMIT 1');
+                $stmt = $pdo->prepare('SELECT id, fullname, email, phone, password, role FROM users WHERE email = ? LIMIT 1');
                 $stmt->execute([$email]);
                 $row = $stmt->fetch();
                 if ($row && password_verify($password, $row['password'])) {
+                    $row['name'] = $row['fullname'];
                     $userFound = $row;
                 }
             } catch (PDOException $e) {
@@ -42,11 +43,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } elseif ($email === 'demo@doan6.local' && $password === '123456') {
                 $userFound = [
                     'id' => 999,
-                    'name' => 'Thành viên Đoàn 6',
+                    'name' => 'Tài khoản Demo Admin',
                     'email' => 'demo@doan6.local',
                     'phone' => '00000000',
                     'address' => 'Khu vực Demo, TP. Hồ Chí Minh',
-                    'role' => 'user',
+                    'role' => 'admin',
                 ];
             }
         }
