@@ -5,25 +5,46 @@ require_once __DIR__ . '/_layout.php';
 $adminUser = requireAdmin();
 initAdminData();
 
-$categories = &$_SESSION['admin_categories'];
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
+    $pdo = getPDO();
+
     if ($action === 'add') {
         $name = trim($_POST['name'] ?? '');
         $slug = trim($_POST['slug'] ?? '');
         $icon = trim($_POST['icon'] ?? 'fa-tag');
         if ($name !== '' && $slug !== '') {
-            $categories[] = ['name' => $name, 'slug' => $slug, 'icon' => $icon];
+            if ($pdo) {
+                try {
+                    $stmt = $pdo->prepare('INSERT INTO categories (name, slug, icon) VALUES (?, ?, ?)');
+                    $stmt->execute([$name, $slug, $icon]);
+                } catch (PDOException $e) {
+                }
+            }
+            $_SESSION['admin_categories'][] = ['name' => $name, 'slug' => $slug, 'icon' => $icon];
             $message = 'Đã thêm danh mục mới!';
         }
     } elseif ($action === 'delete') {
         $slug = $_POST['slug'] ?? '';
-        $categories = array_values(array_filter($categories, fn($c) => $c['slug'] !== $slug));
+        if ($pdo && $slug !== '') {
+            try {
+                $stmt = $pdo->prepare('DELETE FROM categories WHERE slug = ?');
+                $stmt->execute([$slug]);
+            } catch (PDOException $e) {
+            }
+        }
+        $_SESSION['admin_categories'] = array_values(array_filter(
+            $_SESSION['admin_categories'] ?? [],
+            fn($c) => $c['slug'] !== $slug
+        ));
         $message = 'Đã xóa danh mục!';
     }
 }
+
+$categories = getCategories();
+$_SESSION['admin_categories'] = $categories;
 
 renderAdminHeader('Quản lý Danh mục', 'categories', $adminUser);
 ?>

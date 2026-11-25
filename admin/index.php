@@ -5,9 +5,9 @@ require_once __DIR__ . '/_layout.php';
 $adminUser = requireAdmin();
 initAdminData();
 
-$products = $_SESSION['admin_products'];
-$categories = $_SESSION['admin_categories'];
-$orders = $_SESSION['orders'];
+$products = getAllProducts();
+$categories = getCategories();
+$orders = getAdminOrders();
 
 $totalRevenue = 0;
 foreach ($orders as $o) {

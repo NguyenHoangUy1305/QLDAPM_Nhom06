@@ -5,7 +5,6 @@ require_once __DIR__ . '/_layout.php';
 $adminUser = requireAdmin();
 initAdminData();
 
-$orders = &$_SESSION['orders'];
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -14,25 +13,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $newStatus = $_POST['status'] ?? '';
 
     if ($action === 'update_status' && $id > 0 && $newStatus !== '') {
-        foreach ($orders as &$o) {
-            if ((int)$o['id'] === $id) {
-                $o['status'] = $newStatus;
-                $message = 'Đã cập nhật trạng thái đơn ' . ($o['code'] ?? ('DH' . $id)) . ' thành "' . $newStatus . '"';
-                break;
-            }
-        }
-        unset($o);
-
         $pdo = getPDO();
         if ($pdo) {
             try {
                 $stmt = $pdo->prepare('UPDATE orders SET status = ? WHERE id = ?');
                 $stmt->execute([$newStatus, $id]);
-            } catch (PDOException $e) {}
+            } catch (PDOException $e) {
+            }
         }
+        if (!empty($_SESSION['orders'])) {
+            foreach ($_SESSION['orders'] as &$o) {
+                if ((int)$o['id'] === $id) {
+                    $o['status'] = $newStatus;
+                    break;
+                }
+            }
+            unset($o);
+        }
+        $message = 'Đã cập nhật trạng thái đơn DH' . str_pad((string)$id, 5, '0', STR_PAD_LEFT) . ' thành "' . $newStatus . '"';
     }
 }
 
+$orders = getAdminOrders();
 $statuses = ['Chờ xác nhận', 'Đang giao', 'Hoàn thành', 'Đã hủy'];
 renderAdminHeader('Quản lý Đơn hàng', 'orders', $adminUser);
 ?>

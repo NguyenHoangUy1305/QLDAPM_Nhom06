@@ -14,22 +14,50 @@ function requireAdmin(): array
     exit;
 }
 
-function initAdminData(): void
+function getAdminOrders(): array
 {
-    if (!isset($_SESSION['admin_products'])) {
-        $_SESSION['admin_products'] = getAllProducts();
+    $pdo = getPDO();
+    if ($pdo) {
+        try {
+            $dbOrders = $pdo->query('SELECT * FROM orders ORDER BY id DESC')->fetchAll();
+            if (!empty($dbOrders)) {
+                $orders = [];
+                $itemStmt = $pdo->prepare('
+                    SELECT oi.quantity AS qty, oi.price, COALESCE(oi.product_name, p.name, "Sản phẩm") AS name
+                    FROM order_items oi
+                    LEFT JOIN products p ON p.id = oi.product_id
+                    WHERE oi.order_id = ?
+                ');
+                foreach ($dbOrders as $o) {
+                    $itemStmt->execute([$o['id']]);
+                    $orders[] = [
+                        'id' => (int)$o['id'],
+                        'code' => 'DH' . str_pad((string)$o['id'], 5, '0', STR_PAD_LEFT),
+                        'customer_name' => $o['customer_name'],
+                        'phone' => $o['phone'],
+                        'address' => $o['address'],
+                        'payment_method' => $o['payment_method'] ?? 'COD',
+                        'total_price' => (int)round((float)$o['total_price']),
+                        'status' => $o['status'],
+                        'created_at' => $o['created_at'],
+                        'items' => $itemStmt->fetchAll() ?: [],
+                    ];
+                }
+                return $orders;
+            }
+        } catch (PDOException $e) {
+            // Fallback sang Session bên dưới
+        }
     }
-    if (!isset($_SESSION['admin_categories'])) {
-        $_SESSION['admin_categories'] = getCategories();
-    }
+
     if (!isset($_SESSION['orders'])) {
         $_SESSION['orders'] = [
             [
-                'id' => 1001,
-                'code' => 'DH01001',
+                'id' => 1,
+                'code' => 'DH00001',
                 'customer_name' => 'Nguyễn Văn An',
                 'phone' => '0000.0000',
-                'address' => 'TP. Hồ Chí Minh',
+                'address' => 'Khu vực Demo, Quận 10, TP. Hồ Chí Minh',
                 'payment_method' => 'COD',
                 'total_price' => 18380000,
                 'status' => 'Chờ xác nhận',
@@ -40,11 +68,11 @@ function initAdminData(): void
                 ],
             ],
             [
-                'id' => 1002,
-                'code' => 'DH01002',
+                'id' => 2,
+                'code' => 'DH00002',
                 'customer_name' => 'Trần Thị Bình',
                 'phone' => '0000.0000',
-                'address' => 'Hà Nội',
+                'address' => 'Khu vực Demo, Quận Tân Bình, TP. Hồ Chí Minh',
                 'payment_method' => 'Chuyển khoản',
                 'total_price' => 17990000,
                 'status' => 'Đang giao',
@@ -54,5 +82,16 @@ function initAdminData(): void
                 ],
             ],
         ];
+    }
+    return $_SESSION['orders'];
+}
+
+function initAdminData(): void
+{
+    if (!isset($_SESSION['admin_products'])) {
+        $_SESSION['admin_products'] = getAllProducts();
+    }
+    if (!isset($_SESSION['admin_categories'])) {
+        $_SESSION['admin_categories'] = getCategories();
     }
 }

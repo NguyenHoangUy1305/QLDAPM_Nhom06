@@ -5,17 +5,27 @@ require_once __DIR__ . '/_layout.php';
 $adminUser = requireAdmin();
 initAdminData();
 
-$products = &$_SESSION['admin_products'];
-$categories = $_SESSION['admin_categories'];
+$categories = getCategories();
 $message = '';
 
-// Xử lý Thêm / Sửa / Xóa
+// Xử lý Thêm / Sửa / Xóa sản phẩm (Đồng bộ cả MySQL và Session)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
+    $pdo = getPDO();
 
     if ($action === 'delete') {
         $id = (int)($_POST['id'] ?? 0);
-        $products = array_values(array_filter($products, fn($p) => (int)$p['id'] !== $id));
+        if ($pdo && $id > 0) {
+            try {
+                $stmt = $pdo->prepare('DELETE FROM products WHERE id = ?');
+                $stmt->execute([$id]);
+            } catch (PDOException $e) {
+            }
+        }
+        $_SESSION['admin_products'] = array_values(array_filter(
+            $_SESSION['admin_products'] ?? [],
+            fn($p) => (int)$p['id'] !== $id
+        ));
         $message = 'Đã xóa sản phẩm thành công!';
     } elseif ($action === 'save') {
         $id = (int)($_POST['id'] ?? 0);
@@ -24,7 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $brand = trim($_POST['brand'] ?? 'ACER');
         $price = (int)($_POST['price'] ?? 0);
         $oldPrice = (int)($_POST['old_price'] ?? 0);
+        $stock = max(0, (int)($_POST['stock'] ?? 20));
         $promo = trim($_POST['promo'] ?? '');
+        $specsStr = trim($_POST['specs'] ?? ($brand . ',Chính hãng'));
         $discount = ($oldPrice > $price && $oldPrice > 0) ? (int)round((($oldPrice - $price) / $oldPrice) * 100) : 0;
 
         $imagePath = trim($_POST['existing_image'] ?? 'assets/images/products/laptop1.jpg');
@@ -40,30 +52,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if ($id > 0) {
-            foreach ($products as &$p) {
-                if ((int)$p['id'] === $id) {
-                    $p['name'] = $name;
-                    $p['category'] = $category;
-                    $p['brand'] = $brand;
-                    $p['price'] = $price;
-                    $p['old_price'] = $oldPrice;
-                    $p['discount'] = $discount;
-                    $p['promo'] = $promo;
-                    $p['image'] = $imagePath;
-                    break;
+            if ($pdo) {
+                try {
+                    $stmt = $pdo->prepare('
+                        UPDATE products
+                        SET name = ?, category_slug = ?, brand = ?, image = ?, old_price = ?, price = ?, discount = ?, specs = ?, promo = ?, stock = ?
+                        WHERE id = ?
+                    ');
+                    $stmt->execute([$name, $category, $brand, $imagePath, $oldPrice, $price, $discount, $specsStr, $promo, $stock, $id]);
+                } catch (PDOException $e) {
                 }
             }
-            unset($p);
-            $message = 'Đã cập nhật sản phẩm!';
-        } else {
-            $maxId = 0;
-            foreach ($products as $p) {
-                if ((int)$p['id'] > $maxId) $maxId = (int)$p['id'];
+            if (!empty($_SESSION['admin_products'])) {
+                foreach ($_SESSION['admin_products'] as &$p) {
+                    if ((int)$p['id'] === $id) {
+                        $p['name'] = $name;
+                        $p['category'] = $category;
+                        $p['brand'] = $brand;
+                        $p['price'] = $price;
+                        $p['old_price'] = $oldPrice;
+                        $p['discount'] = $discount;
+                        $p['promo'] = $promo;
+                        $p['image'] = $imagePath;
+                        $p['stock'] = $stock;
+                        $p['specs'] = array_map('trim', explode(',', $specsStr));
+                        break;
+                    }
+                }
+                unset($p);
             }
-            $newId = $maxId + 1;
-            array_unshift($products, [
+            $message = 'Đã cập nhật sản phẩm vào hệ thống!';
+        } else {
+            $slug = 'san-pham-' . time();
+            $newId = time();
+            if ($pdo) {
+                try {
+                    $stmt = $pdo->prepare('
+                        INSERT INTO products (slug, name, category_slug, brand, image, old_price, price, discount, fast_delivery, specs, promo, flash_sale, stock)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, 0, ?)
+                    ');
+                    $stmt->execute([$slug, $name, $category, $brand, $imagePath, $oldPrice, $price, $discount, $specsStr, $promo, $stock]);
+                    $newId = (int)$pdo->lastInsertId();
+                } catch (PDOException $e) {
+                }
+            }
+            if (!isset($_SESSION['admin_products'])) {
+                $_SESSION['admin_products'] = [];
+            }
+            array_unshift($_SESSION['admin_products'], [
                 'id' => $newId,
-                'slug' => 'san-pham-' . $newId,
+                'slug' => $slug,
                 'name' => $name,
                 'category' => $category,
                 'brand' => $brand,
@@ -72,14 +110,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'price' => $price,
                 'discount' => $discount,
                 'fast_delivery' => true,
-                'specs' => [$brand, 'Chính hãng'],
+                'specs' => array_map('trim', explode(',', $specsStr)),
                 'promo' => $promo,
                 'flash_sale' => false,
+                'stock' => $stock,
             ]);
-            $message = 'Đã thêm sản phẩm mới!';
+            $message = 'Đã thêm sản phẩm mới vào hệ thống!';
         }
     }
 }
+
+$products = getAllProducts();
+$_SESSION['admin_products'] = $products;
 
 $editProduct = null;
 if (isset($_GET['edit'])) {
@@ -146,6 +188,18 @@ renderAdminHeader('Quản lý Sản phẩm', 'products', $adminUser);
                         class="w-full h-9 px-3 rounded-lg border border-gray-300">
                 </div>
             </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block font-bold mb-1">Tồn kho *</label>
+                    <input type="number" name="stock" required value="<?= (int)($editProduct['stock'] ?? 20) ?>"
+                        class="w-full h-9 px-3 rounded-lg border border-gray-300">
+                </div>
+                <div>
+                    <label class="block font-bold mb-1">Thông số (cách dấu phẩy)</label>
+                    <input type="text" name="specs" value="<?= e(isset($editProduct['specs']) ? implode(',', (array)$editProduct['specs']) : 'i5,16GB RAM,512GB SSD') ?>"
+                        class="w-full h-9 px-3 rounded-lg border border-gray-300">
+                </div>
+            </div>
             <div>
                 <label class="block font-bold mb-1">Khuyến mãi kèm theo</label>
                 <input type="text" name="promo" value="<?= e($editProduct['promo'] ?? '') ?>" placeholder="Ví dụ: Tặng Balo Gaming"
@@ -176,6 +230,7 @@ renderAdminHeader('Quản lý Sản phẩm', 'products', $adminUser);
                         <th class="p-2.5">Ảnh</th>
                         <th class="p-2.5">Tên sản phẩm</th>
                         <th class="p-2.5">Hãng</th>
+                        <th class="p-2.5">Tồn kho</th>
                         <th class="p-2.5">Giá bán</th>
                         <th class="p-2.5 text-right">Thao tác</th>
                     </tr>
@@ -190,6 +245,9 @@ renderAdminHeader('Quản lý Sản phẩm', 'products', $adminUser);
                                 <div class="line-clamp-2"><?= e($p['name']) ?></div>
                             </td>
                             <td class="p-2.5 text-gray-500"><?= e($p['brand']) ?></td>
+                            <td class="p-2.5 font-bold <?= ((int)($p['stock'] ?? 20)) > 0 ? 'text-emerald-600' : 'text-red-600' ?>">
+                                <?= (int)($p['stock'] ?? 20) ?>
+                            </td>
                             <td class="p-2.5 font-bold text-gvn-red"><?= formatPrice((int)$p['price']) ?></td>
                             <td class="p-2.5 text-right whitespace-nowrap">
                                 <a href="products.php?edit=<?= (int)$p['id'] ?>" class="text-blue-600 hover:underline font-bold mr-2">Sửa</a>

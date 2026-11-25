@@ -19,11 +19,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $pdo = getPDO();
     if ($pdo) {
         try {
-            $stmt = $pdo->prepare("SELECT id, fullname, email, password, role FROM users WHERE email = ? AND role = 'admin' LIMIT 1");
+            $stmt = $pdo->prepare("SELECT id, name, email, password, role FROM users WHERE email = ? AND role = 'admin' LIMIT 1");
             $stmt->execute([$email]);
             $row = $stmt->fetch();
             if ($row && password_verify($password, $row['password'])) {
-                $row['name'] = $row['fullname'];
                 $adminFound = $row;
             }
         } catch (PDOException $e) {
@@ -65,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Đăng nhập Admin - ĐOÀN 6</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-zinc-900 min-h-screen flex items-center justify-center p-4">
@@ -93,18 +93,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <input type="password" name="password" required placeholder="Nhập mật khẩu"
                     class="w-full h-10 px-3.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:border-[#E30019]">
             </div>
-            <button type="submit" class="w-full bg-[#E30019] hover:bg-[#B80014] text-white font-extrabold py-3 rounded-xl text-sm uppercase transition">
-                Đăng nhập Admin
+            <button type="submit" class="w-full bg-[#E30019] hover:bg-[#B80014] text-white font-extrabold py-3 rounded-xl uppercase text-sm transition">
+                Đăng nhập
             </button>
         </form>
 
-        <div class="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-800">
-            <strong>Tài khoản Admin demo:</strong><br>
+        <div class="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-3 text-[11px] text-blue-800">
+            <strong>Tài khoản Admin mặc định:</strong><br>
             Email: <code>admin@doan6.local</code> | Mật khẩu: <code>admin123</code>
         </div>
 
-        <div class="mt-4 text-center text-xs">
-            <a href="../index.php" class="text-gray-500 hover:text-[#E30019]">← Quay về trang bán hàng</a>
+        <div class="mt-4 text-center">
+            <a href="../index.php" class="text-xs text-gray-500 hover:text-[#E30019]">← Quay về trang chủ bán hàng</a>
         </div>
     </div>
 </body>
