@@ -5,6 +5,8 @@ require_once __DIR__ . '/../data/store.php';
 $categories = getCategories();
 $pageTitle = $pageTitle ?? 'ĐOÀN 6 - Máy tính cao cấp, Laptop Gaming, Gear chính hãng';
 $cartCount = getCartCount();
+$isAdmin = !empty($_SESSION['admin_user'])
+    || (!empty($_SESSION['user']) && ($_SESSION['user']['role'] ?? '') === 'admin');
 ?>
 <!DOCTYPE html>
 <html lang="vi">
@@ -101,12 +103,35 @@ $cartCount = getCartCount();
                         <span id="cart-count" class="bg-gvn-red text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full"><?= (int)$cartCount ?></span>
                     </a>
                     <?php if (!empty($_SESSION['user'])): ?>
+                        <?php
+                        $displayName = $_SESSION['user']['name'] ?? $_SESSION['user']['fullname'] ?? 'Người dùng';
+                        $logoutUrl = 'logout.php';
+                        ?>
                         <div class="flex items-center gap-1.5">
                             <a href="orders.php" class="bg-black hover:bg-neutral-800 text-white px-3 py-2 rounded-lg flex items-center gap-2 text-xs font-semibold transition">
                                 <i class="fa-regular fa-user text-sm"></i>
-                                <span class="hidden md:inline max-w-[110px] truncate"><?= e($_SESSION['user']['name']) ?></span>
+                                <span class="hidden md:inline max-w-[110px] truncate"><?= e($displayName) ?></span>
                             </a>
-                            <a href="logout.php" title="Đăng xuất" class="bg-black/70 hover:bg-black text-white px-2.5 py-2 rounded-lg text-xs transition">
+                            <?php if ($isAdmin): ?>
+                                <a href="admin/index.php" title="Vào trang quản trị" class="bg-red-700 hover:bg-red-800 text-white px-2.5 py-2 rounded-lg text-xs font-semibold transition">
+                                    <i class="fa-solid fa-user-shield"></i>
+                                    <span class="hidden md:inline ml-1">Quản trị</span>
+                                </a>
+                            <?php endif; ?>
+                            <a href="<?= e($logoutUrl) ?>" title="Đăng xuất" class="bg-black/70 hover:bg-black text-white px-2.5 py-2 rounded-lg text-xs transition">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                            </a>
+                        </div>
+                    <?php elseif (!empty($_SESSION['admin_user'])): ?>
+                        <?php
+                        $displayName = $_SESSION['admin_user']['name'] ?? 'Quản trị viên';
+                        ?>
+                        <div class="flex items-center gap-1.5">
+                            <a href="admin/index.php" title="Vào trang quản trị" class="bg-red-700 hover:bg-red-800 text-white px-2.5 py-2 rounded-lg text-xs font-semibold transition">
+                                <i class="fa-solid fa-user-shield"></i>
+                                <span class="hidden md:inline ml-1"><?= e($displayName) ?></span>
+                            </a>
+                            <a href="admin/logout.php" title="Đăng xuất" class="bg-black/70 hover:bg-black text-white px-2.5 py-2 rounded-lg text-xs transition">
                                 <i class="fa-solid fa-right-from-bracket"></i>
                             </a>
                         </div>

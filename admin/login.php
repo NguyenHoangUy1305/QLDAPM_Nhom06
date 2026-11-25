@@ -39,6 +39,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'role' => 'admin',
         ];
     }
+    if (!$adminFound && $email === 'demo@doan6.local' && $password === '123456') {
+        $adminFound = [
+            'id' => 999,
+            'name' => 'Tài khoản Demo Admin',
+            'email' => 'demo@doan6.local',
+            'role' => 'admin',
+        ];
+    }
 
     if ($adminFound) {
         unset($adminFound['password']);
