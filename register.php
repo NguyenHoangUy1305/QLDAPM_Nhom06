@@ -2,7 +2,7 @@
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/data/store.php';
 
-if (!empty($_SESSION['user'])) {
+if (currentUser() !== null) {
     header('Location: index.php');
     exit;
 }
@@ -11,76 +11,74 @@ $error = '';
 $name = '';
 $email = '';
 $phone = '';
+$address = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = trim($_POST['name'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $confirm = $_POST['confirm_password'] ?? '';
+    requireCsrf();
+
+    $name = trim((string)($_POST['name'] ?? ''));
+    $email = trim((string)($_POST['email'] ?? ''));
+    $phoneRaw = trim((string)($_POST['phone'] ?? ''));
+    $phoneDigits = preg_replace('/\D+/', '', $phoneRaw);
+    $address = trim((string)($_POST['address'] ?? ''));
+    $password = (string)($_POST['password'] ?? '');
+    $confirm = (string)($_POST['confirm_password'] ?? '');
 
     if ($name === '' || $email === '' || $password === '') {
         $error = 'Vui lòng điền đầy đủ Họ tên, Email và Mật khẩu.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Địa chỉ Email không hợp lệ.';
+    } elseif ($phoneRaw !== '' && !preg_match('/^0\d{8,10}$/', $phoneDigits)) {
+        $error = 'Số điện thoại không hợp lệ (cần bắt đầu bằng số 0 và dài 9-11 chữ số).';
     } elseif (strlen($password) < 6) {
         $error = 'Mật khẩu phải có ít nhất 6 ký tự.';
     } elseif ($password !== $confirm) {
         $error = 'Mật khẩu xác nhận không khớp.';
     } else {
-        $hashed = password_hash($password, PASSWORD_DEFAULT);
-        $savedToDb = false;
-
         $pdo = getPDO();
-        if ($pdo) {
+        if (!$pdo) {
+            $error = 'Hệ thống cơ sở dữ liệu tạm thời gián đoạn. Vui lòng thử lại sau.';
+        } else {
             try {
                 $check = $pdo->prepare('SELECT id FROM users WHERE email = ? LIMIT 1');
                 $check->execute([$email]);
                 if ($check->fetch()) {
                     $error = 'Email này đã được đăng ký.';
                 } else {
-                    $stmt = $pdo->prepare('INSERT INTO users (name, email, phone, password, role, created_at) VALUES (?, ?, ?, ?, ?, NOW())');
-                    $stmt->execute([$name, $email, $phone, $hashed, 'user']);
+                    $hashed = password_hash($password, PASSWORD_DEFAULT);
+                    $storedPhone = $phoneRaw !== '' ? $phoneDigits : null;
+                    $stmt = $pdo->prepare("
+                        INSERT INTO users (name, email, phone, address, password, role, status, created_at)
+                        VALUES (?, ?, ?, ?, ?, 'customer', 'active', NOW())
+                    ");
+                    $stmt->execute([
+                        $name,
+                        $email,
+                        $storedPhone,
+                        $address !== '' ? $address : null,
+                        $hashed,
+                    ]);
                     $newId = (int)$pdo->lastInsertId();
-                    $_SESSION['user'] = [
+
+                    session_regenerate_id(true);
+                    syncUserSession([
                         'id' => $newId,
                         'name' => $name,
                         'email' => $email,
-                        'phone' => $phone,
-                        'address' => '',
-                        'role' => 'user',
-                    ];
-                    $savedToDb = true;
+                        'phone' => $storedPhone ?? '',
+                        'address' => $address,
+                        'role' => 'customer',
+                        'status' => 'active',
+                    ]);
+                    header('Location: index.php');
+                    exit;
                 }
             } catch (PDOException $e) {
-                // Bảng users chưa tồn tại -> dùng session fallback bên dưới
+                $error = 'Không thể đăng ký tài khoản lúc này. Vui lòng thử lại.';
             }
-        }
-
-        if ($error === '' && !$savedToDb) {
-            if (isset($_SESSION['registered_users'][$email])) {
-                $error = 'Email này đã được đăng ký.';
-            } else {
-                $userData = [
-                    'id' => time(),
-                    'name' => $name,
-                    'email' => $email,
-                    'phone' => $phone,
-                    'address' => '',
-                    'password' => $hashed,
-                    'role' => 'user',
-                ];
-                $_SESSION['registered_users'][$email] = $userData;
-                unset($userData['password']);
-                $_SESSION['user'] = $userData;
-            }
-        }
-
-        if ($error === '') {
-            header('Location: index.php');
-            exit;
         }
     }
+    $phone = $phoneRaw;
 }
 
 $pageTitle = 'Đăng ký tài khoản - ĐOÀN 6';
@@ -90,7 +88,7 @@ require_once __DIR__ . '/includes/header.php';
 <div class="max-w-[460px] mx-auto px-3 py-8">
     <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
         <h1 class="text-xl font-extrabold text-gray-900 uppercase text-center mb-1">Đăng ký tài khoản</h1>
-        <p class="text-xs text-gray-500 text-center mb-5">Tạo tài khoản để mua sắm & theo dõi đơn hàng dễ dàng</p>
+        <p class="text-xs text-gray-500 text-center mb-5">Tạo tài khoản để mua sắm &amp; theo dõi đơn hàng dễ dàng</p>
 
         <?php if ($error !== ''): ?>
             <div class="bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl p-3 mb-4 flex items-center gap-2">
@@ -100,6 +98,7 @@ require_once __DIR__ . '/includes/header.php';
         <?php endif; ?>
 
         <form method="POST" action="register.php" class="space-y-3.5">
+            <input type="hidden" name="csrf_token" value="<?= e(csrfToken()) ?>">
             <div>
                 <label class="block text-xs font-bold text-gray-700 mb-1">Họ và tên *</label>
                 <input type="text" name="name" value="<?= e($name) ?>" required placeholder="Nguyễn Văn A"
@@ -112,7 +111,12 @@ require_once __DIR__ . '/includes/header.php';
             </div>
             <div>
                 <label class="block text-xs font-bold text-gray-700 mb-1">Số điện thoại</label>
-                <input type="text" name="phone" value="<?= e($phone) ?>" placeholder="0000.0000"
+                <input type="text" name="phone" value="<?= e($phone) ?>" placeholder="0909123456"
+                    class="w-full h-10 px-3.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:border-gvn-red">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-700 mb-1">Địa chỉ</label>
+                <input type="text" name="address" value="<?= e($address) ?>" placeholder="Số nhà, đường, quận/huyện, tỉnh/thành"
                     class="w-full h-10 px-3.5 rounded-lg border border-gray-300 text-sm focus:outline-none focus:border-gvn-red">
             </div>
             <div>

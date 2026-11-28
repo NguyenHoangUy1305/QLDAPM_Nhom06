@@ -2,11 +2,14 @@
 /** @var array $product */
 /** @var bool $showSoldBar */
 $showSoldBar = $showSoldBar ?? false;
+$stock = (int)($product['stock'] ?? 0);
+$warrantyMonths = max(1, (int)($product['warranty_months'] ?? 24));
+$hasDiscountPrice = !empty($product['old_price']) && (int)$product['old_price'] > (int)$product['price'];
 ?>
 <div class="bg-white rounded-xl border border-gray-200 p-3 flex flex-col justify-between hover:shadow-lg hover:-translate-y-1 transition duration-200 group relative">
     <!-- Top Badges -->
     <div class="flex items-center justify-between gap-1 mb-2">
-        <?php if (!empty($product['discount'])): ?>
+        <?php if (!empty($product['discount']) && $hasDiscountPrice): ?>
             <span class="bg-gvn-red text-white text-[11px] font-bold px-2 py-0.5 rounded-md">
                 -<?= (int)$product['discount'] ?>%
             </span>
@@ -22,10 +25,27 @@ $showSoldBar = $showSoldBar ?? false;
     </div>
 
     <!-- Image -->
-    <a href="product.php?slug=<?= e($product['slug']) ?>" class="block aspect-square overflow-hidden rounded-lg bg-gray-50 mb-3">
+    <a href="product.php?slug=<?= e($product['slug']) ?>" class="block aspect-square overflow-hidden rounded-lg bg-gray-50 mb-2.5">
         <img src="<?= e($product['image']) ?>" alt="<?= e($product['name']) ?>"
              class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
     </a>
+
+    <!-- Brand, Stock & Warranty Metadata -->
+    <div class="flex flex-wrap items-center justify-between gap-1 mb-1.5">
+        <span class="text-[10px] font-bold uppercase text-gray-700 bg-gray-100 px-1.5 py-0.5 rounded">
+            <?= e($product['brand'] ?: 'ĐOÀN 6') ?>
+        </span>
+        <div class="flex items-center gap-1.5 text-[10px]">
+            <span class="bg-blue-50 text-blue-700 font-semibold px-1.5 py-0.5 rounded">
+                BH <?= $warrantyMonths ?>T
+            </span>
+            <?php if ($stock > 0): ?>
+                <span class="font-semibold text-emerald-700">Còn <?= $stock ?> sp</span>
+            <?php else: ?>
+                <span class="font-semibold text-red-600">Hết hàng</span>
+            <?php endif; ?>
+        </div>
+    </div>
 
     <!-- Title -->
     <a href="product.php?slug=<?= e($product['slug']) ?>" class="text-[13px] font-semibold text-gray-900 group-hover:text-gvn-red line-clamp-2 leading-snug mb-2 min-h-[36px] transition">
@@ -45,7 +65,7 @@ $showSoldBar = $showSoldBar ?? false;
 
     <!-- Price -->
     <div class="mt-auto">
-        <?php if (!empty($product['old_price'])): ?>
+        <?php if ($hasDiscountPrice): ?>
             <div class="text-xs text-gray-400 line-through">
                 <?= formatPrice((int)$product['old_price']) ?>
             </div>

@@ -11,10 +11,10 @@
                     </div>
                     <h4 class="text-white font-bold text-xs uppercase tracking-wider mb-3">KẾT NỐI VỚI CHÚNG TÔI</h4>
                     <div class="flex items-center gap-2.5">
-                        <a href="#" class="w-8 h-8 rounded-full bg-zinc-800 hover:bg-blue-600 text-white flex items-center justify-center transition"><i class="fa-brands fa-facebook-f"></i></a>
-                        <a href="#" class="w-8 h-8 rounded-full bg-zinc-800 hover:bg-black text-white flex items-center justify-center transition"><i class="fa-brands fa-tiktok"></i></a>
-                        <a href="#" class="w-8 h-8 rounded-full bg-zinc-800 hover:bg-red-600 text-white flex items-center justify-center transition"><i class="fa-brands fa-youtube"></i></a>
-                        <a href="#" class="w-8 h-8 rounded-full bg-zinc-800 hover:bg-pink-600 text-white flex items-center justify-center transition"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="news.php" title="Tin tức công nghệ" class="w-8 h-8 rounded-full bg-zinc-800 hover:bg-blue-600 text-white flex items-center justify-center transition"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="news.php" title="Video review" class="w-8 h-8 rounded-full bg-zinc-800 hover:bg-black text-white flex items-center justify-center transition"><i class="fa-brands fa-tiktok"></i></a>
+                        <a href="news.php" title="YouTube" class="w-8 h-8 rounded-full bg-zinc-800 hover:bg-red-600 text-white flex items-center justify-center transition"><i class="fa-brands fa-youtube"></i></a>
+                        <a href="news.php" title="Instagram" class="w-8 h-8 rounded-full bg-zinc-800 hover:bg-pink-600 text-white flex items-center justify-center transition"><i class="fa-brands fa-instagram"></i></a>
                     </div>
                 </div>
 
@@ -33,11 +33,11 @@
                 <div>
                     <h4 class="text-white font-bold text-xs uppercase tracking-wider mb-3">VỀ ĐOÀN 6 & CHÍNH SÁCH</h4>
                     <ul class="space-y-2">
-                        <li><a href="#" class="hover:text-white transition">Giới thiệu về Đoàn 6</a></li>
-                        <li><a href="#" class="hover:text-white transition">Tuyển dụng</a></li>
-                        <li><a href="#" class="hover:text-white transition">Chính sách bảo hành</a></li>
-                        <li><a href="#" class="hover:text-white transition">Chính sách vận chuyển</a></li>
-                        <li><a href="#" class="hover:text-white transition">Chính sách bảo mật</a></li>
+                        <li><a href="info.php?page=gioi-thieu" class="hover:text-white transition">Giới thiệu về Đoàn 6</a></li>
+                        <li><a href="info.php?page=bao-hanh" class="hover:text-white transition">Chính sách bảo hành</a></li>
+                        <li><a href="info.php?page=van-chuyen" class="hover:text-white transition">Chính sách vận chuyển</a></li>
+                        <li><a href="info.php?page=bao-mat" class="hover:text-white transition">Chính sách bảo mật</a></li>
+                        <li><a href="info.php?page=dich-vu" class="hover:text-white transition">Dịch vụ kỹ thuật tận nhà</a></li>
                     </ul>
                 </div>
 
@@ -45,26 +45,24 @@
                 <div>
                     <h4 class="text-white font-bold text-xs uppercase tracking-wider mb-3">THÔNG TIN TIỆN ÍCH</h4>
                     <ul class="space-y-2">
-                        <li><a href="#" class="hover:text-white transition">Hệ thống cửa hàng</a></li>
-                        <li><a href="#" class="hover:text-white transition">Hướng dẫn mua hàng</a></li>
-                        <li><a href="#" class="hover:text-white transition">Hướng dẫn thanh toán</a></li>
-                        <li><a href="#" class="hover:text-white transition">Hướng dẫn trả góp 0%</a></li>
-                        <li><a href="#" class="hover:text-white transition">Tra cứu địa chỉ bảo hành</a></li>
+                        <li><a href="info.php?page=showroom" class="hover:text-white transition">Hệ thống cửa hàng</a></li>
+                        <li><a href="orders.php" class="hover:text-white transition">Tra cứu & lịch sử đơn hàng</a></li>
+                        <li><a href="warranty.php" class="hover:text-white transition">Tra cứu bảo hành điện tử</a></li>
+                        <li><a href="trade-in.php" class="hover:text-white transition">Chương trình Thu cũ đổi mới</a></li>
+                        <li><a href="info.php?page=thanh-toan" class="hover:text-white transition">Hướng dẫn thanh toán COD & VietQR</a></li>
                     </ul>
                 </div>
 
                 <!-- Col 5 -->
                 <div>
                     <h4 class="text-white font-bold text-xs uppercase tracking-wider mb-3">HỖ TRỢ THANH TOÁN</h4>
-                    <div class="grid grid-cols-4 gap-1.5 mb-4">
-                        <span class="bg-zinc-800 text-zinc-200 text-[10px] font-bold py-1.5 text-center rounded">VISA</span>
-                        <span class="bg-zinc-800 text-zinc-200 text-[10px] font-bold py-1.5 text-center rounded">Master</span>
-                        <span class="bg-zinc-800 text-zinc-200 text-[10px] font-bold py-1.5 text-center rounded">JCB</span>
-                        <span class="bg-zinc-800 text-zinc-200 text-[10px] font-bold py-1.5 text-center rounded">ATM</span>
-                        <span class="bg-zinc-800 text-zinc-200 text-[10px] font-bold py-1.5 text-center rounded">MoMo</span>
-                        <span class="bg-zinc-800 text-zinc-200 text-[10px] font-bold py-1.5 text-center rounded">ZaloPay</span>
+                    <div class="grid grid-cols-3 gap-1.5 mb-4">
+                        <span class="bg-zinc-800 text-zinc-200 text-[10px] font-bold py-1.5 text-center rounded">COD</span>
+                        <span class="bg-zinc-800 text-zinc-200 text-[10px] font-bold py-1.5 text-center rounded">VietQR</span>
                         <span class="bg-zinc-800 text-zinc-200 text-[10px] font-bold py-1.5 text-center rounded">Tiền mặt</span>
-                        <span class="bg-zinc-800 text-zinc-200 text-[10px] font-bold py-1.5 text-center rounded">Trả góp</span>
+                        <span class="bg-zinc-800 text-zinc-200 text-[10px] font-bold py-1.5 text-center rounded">Napas 247</span>
+                        <span class="bg-zinc-800 text-zinc-200 text-[10px] font-bold py-1.5 text-center rounded">ATM</span>
+                        <span class="bg-zinc-800 text-zinc-200 text-[10px] font-bold py-1.5 text-center rounded">Chuyển khoản</span>
                     </div>
                     <h4 class="text-white font-bold text-xs uppercase tracking-wider mb-2">ĐƠN VỊ VẬN CHUYỂN</h4>
                     <div class="flex flex-wrap gap-1.5">
@@ -94,8 +92,8 @@
         <a href="tel:00000000" title="Hotline 0000.0000" class="w-11 h-11 rounded-full bg-gvn-red hover:bg-gvn-redHover text-white shadow-lg flex items-center justify-center transition">
             <i class="fa-solid fa-phone-volume"></i>
         </a>
-        <a href="#" title="Chat Zalo" class="w-11 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg flex items-center justify-center font-bold text-xs transition">
-            Zalo
+        <a href="pc-builder.php" title="Tự Build PC" class="w-11 h-11 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg flex items-center justify-center font-bold text-[10px] transition">
+            PC
         </a>
         <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="Lên đầu trang" class="w-11 h-11 rounded-full bg-zinc-800 hover:bg-black text-white shadow-lg flex items-center justify-center transition">
             <i class="fa-solid fa-arrow-up"></i>

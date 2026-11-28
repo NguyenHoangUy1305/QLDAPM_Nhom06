@@ -12,3 +12,7 @@ desktop.ini
 # Local environment & logs
 *.log
 .env
+
+# Python E2E cache
+__pycache__/
+*.py[cod]
