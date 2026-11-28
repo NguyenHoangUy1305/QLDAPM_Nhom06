@@ -3,11 +3,20 @@ $pageTitle = 'ĐOÀN 6 - Máy tính cao cấp, Laptop Gaming, Gear chính hãng'
 require_once __DIR__ . '/includes/header.php';
 
 $allProducts = getAllProducts();
+$brands = getBrands();
+$brandCounts = [];
+foreach ($allProducts as $p) {
+    $bid = (int)($p['brand_id'] ?? 0);
+    if ($bid > 0) {
+        $brandCounts[$bid] = ($brandCounts[$bid] ?? 0) + 1;
+    }
+}
+
 $flashSales = array_values(array_filter($allProducts, fn($p) => !empty($p['flash_sale'])));
 $pcs = array_values(array_filter($allProducts, fn($p) => $p['category'] === 'pc-gvn'));
 $laptopGamings = array_values(array_filter($allProducts, fn($p) => $p['category'] === 'laptop-gaming'));
 $monitors = array_values(array_filter($allProducts, fn($p) => $p['category'] === 'man-hinh'));
-$gears = array_values(array_filter($allProducts, fn($p) => in_array($p['category'], ['ban-phim-chuot', 'tai-nghe-loa'])));
+$gears = array_values(array_filter($allProducts, fn($p) => in_array($p['category'], ['ban-phim-chuot', 'tai-nghe-loa'], true)));
 $news = getNews();
 ?>
 
@@ -37,17 +46,17 @@ $news = getNews();
                 <img src="assets/images/banners/hero3.jpg" alt="Đoàn 6 Banner 3" class="w-full h-full object-cover shrink-0">
             </div>
 
-            <button onclick="moveSlide(-1)" class="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-gvn-red text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+            <button onclick="moveSlide(-1)" aria-label="Slide trước" class="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-gvn-red text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                 <i class="fa-solid fa-chevron-left"></i>
             </button>
-            <button onclick="moveSlide(1)" class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-gvn-red text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+            <button onclick="moveSlide(1)" aria-label="Slide tiếp theo" class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/50 hover:bg-gvn-red text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                 <i class="fa-solid fa-chevron-right"></i>
             </button>
 
             <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2">
-                <button onclick="goToSlide(0)" class="hero-dot w-2.5 h-2.5 rounded-full bg-gvn-red transition"></button>
-                <button onclick="goToSlide(1)" class="hero-dot w-2.5 h-2.5 rounded-full bg-white/60 transition"></button>
-                <button onclick="goToSlide(2)" class="hero-dot w-2.5 h-2.5 rounded-full bg-white/60 transition"></button>
+                <button onclick="goToSlide(0)" aria-label="Slide 1" class="hero-dot w-2.5 h-2.5 rounded-full bg-gvn-red transition"></button>
+                <button onclick="goToSlide(1)" aria-label="Slide 2" class="hero-dot w-2.5 h-2.5 rounded-full bg-white/60 transition"></button>
+                <button onclick="goToSlide(2)" aria-label="Slide 3" class="hero-dot w-2.5 h-2.5 rounded-full bg-white/60 transition"></button>
             </div>
         </div>
 
@@ -71,7 +80,7 @@ $news = getNews();
                 ['name' => 'Laptop', 'icon' => 'fa-laptop', 'color' => 'text-blue-600 bg-blue-50', 'slug' => 'laptop'],
                 ['name' => 'PC ĐOÀN 6', 'icon' => 'fa-desktop', 'color' => 'text-purple-600 bg-purple-50', 'slug' => 'pc-gvn'],
                 ['name' => 'Màn hình', 'icon' => 'fa-tv', 'color' => 'text-emerald-600 bg-emerald-50', 'slug' => 'man-hinh'],
-                ['name' => 'VGA - Card', 'icon' => 'fa-microchip', 'color' => 'text-orange-600 bg-orange-50', 'slug' => 'linh-kien'],
+                ['name' => 'Linh kiện PC', 'icon' => 'fa-microchip', 'color' => 'text-orange-600 bg-orange-50', 'slug' => 'linh-kien'],
                 ['name' => 'Bàn phím', 'icon' => 'fa-keyboard', 'color' => 'text-pink-600 bg-pink-50', 'slug' => 'ban-phim-chuot'],
                 ['name' => 'Chuột', 'icon' => 'fa-computer-mouse', 'color' => 'text-cyan-600 bg-cyan-50', 'slug' => 'ban-phim-chuot'],
                 ['name' => 'Tai nghe', 'icon' => 'fa-headphones', 'color' => 'text-indigo-600 bg-indigo-50', 'slug' => 'tai-nghe-loa'],
@@ -88,6 +97,31 @@ $news = getNews();
             <?php endforeach; ?>
         </div>
     </section>
+
+    <!-- 2.5 BRAND / MANUFACTURER FILTER STRIP -->
+    <?php if (!empty($brands)): ?>
+        <section class="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-sm font-extrabold text-gray-900 uppercase flex items-center gap-2">
+                    <i class="fa-solid fa-award text-gvn-red"></i>
+                    Thương hiệu / Hãng sản xuất chính hãng
+                </h2>
+                <a href="collection.php?cat=all" class="text-xs font-bold text-gvn-red hover:underline">Xem tất cả ›</a>
+            </div>
+            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                <?php foreach ($brands as $b): ?>
+                    <?php $cnt = (int)($brandCounts[(int)$b['id']] ?? 0); ?>
+                    <a href="collection.php?brand_id=<?= (int)$b['id'] ?>"
+                       class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gvn-red hover:text-white hover:border-gvn-red text-xs font-bold text-gray-800 transition">
+                        <span><?= e($b['name']) ?></span>
+                        <?php if ($cnt > 0): ?>
+                            <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-white/80 text-gray-600"><?= $cnt ?></span>
+                        <?php endif; ?>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        </section>
+    <?php endif; ?>
 
     <!-- 3. FLASH SALE / HOT DEAL -->
     <section class="bg-gradient-to-r from-[#E30019] to-[#FF4D4D] rounded-2xl p-4 shadow-md">
@@ -130,10 +164,19 @@ $news = getNews();
                 </span>
             </div>
             <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
-                <?php foreach (['Tất cả', 'PC I3', 'PC I5', 'PC I7', 'PC R5'] as $idx => $tab): ?>
-                    <button onclick="filterSection('pc-grid', '<?= e($tab) ?>', this)"
+                <?php
+                $pcTabs = [
+                    ['label' => 'Tất cả', 'kw' => 'all'],
+                    ['label' => 'PC I3', 'kw' => 'i3'],
+                    ['label' => 'PC I5', 'kw' => 'i5'],
+                    ['label' => 'PC I7', 'kw' => 'i7'],
+                    ['label' => 'PC R5', 'kw' => 'ryzen 5'],
+                ];
+                foreach ($pcTabs as $idx => $tab):
+                ?>
+                    <button type="button" onclick="filterByText('pc-grid', '<?= e($tab['kw']) ?>', this)"
                         class="tab-btn px-3 py-1 rounded-full text-xs font-semibold border transition <?= $idx === 0 ? 'bg-gvn-red text-white border-gvn-red' : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-gvn-red' ?>">
-                        <?= e($tab) ?>
+                        <?= e($tab['label']) ?>
                     </button>
                 <?php endforeach; ?>
                 <a href="collection.php?cat=pc-gvn" class="text-xs font-bold text-gvn-red hover:underline ml-2 whitespace-nowrap">
@@ -144,7 +187,8 @@ $news = getNews();
 
         <div id="pc-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             <?php foreach ($pcs as $product): ?>
-                <div class="filter-item" data-brand="<?= e($product['brand']) ?>">
+                <?php $pcSearchText = mb_strtolower($product['name'] . ' ' . implode(' ', (array)($product['specs'] ?? [])), 'UTF-8'); ?>
+                <div class="filter-item" data-filter-text="<?= e($pcSearchText) ?>">
                     <?php include __DIR__ . '/includes/product-card.php'; ?>
                 </div>
             <?php endforeach; ?>
@@ -162,7 +206,7 @@ $news = getNews();
             </div>
             <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
                 <?php foreach (['Tất cả', 'ACER', 'ASUS', 'MSI', 'LENOVO'] as $idx => $tab): ?>
-                    <button onclick="filterSection('laptop-gaming-grid', '<?= e($tab) ?>', this)"
+                    <button type="button" onclick="filterSection('laptop-gaming-grid', '<?= e($tab) ?>', this)"
                         class="tab-btn px-3 py-1 rounded-full text-xs font-semibold border transition <?= $idx === 0 ? 'bg-gvn-red text-white border-gvn-red' : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-gvn-red' ?>">
                         <?= e($tab) ?>
                     </button>
@@ -175,7 +219,7 @@ $news = getNews();
 
         <div id="laptop-gaming-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             <?php foreach ($laptopGamings as $product): ?>
-                <div class="filter-item" data-brand="<?= e($product['brand']) ?>">
+                <div class="filter-item" data-brand="<?= e(mb_strtolower((string)$product['brand'], 'UTF-8')) ?>">
                     <?php include __DIR__ . '/includes/product-card.php'; ?>
                 </div>
             <?php endforeach; ?>
@@ -214,7 +258,8 @@ $news = getNews();
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
             <?php if (!empty($news[0])): ?>
-                <a href="news.php?id=0" class="lg:col-span-6 group block">
+                <?php $leadUrl = !empty($news[0]['slug']) ? 'news.php?slug=' . urlencode($news[0]['slug']) : 'news.php?id=' . (int)$news[0]['id']; ?>
+                <a href="<?= e($leadUrl) ?>" class="lg:col-span-6 group block">
                     <div class="rounded-xl overflow-hidden aspect-video mb-3">
                         <img src="<?= e($news[0]['image']) ?>" alt="<?= e($news[0]['title']) ?>" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
                     </div>
@@ -224,8 +269,9 @@ $news = getNews();
             <?php endif; ?>
 
             <div class="lg:col-span-6 flex flex-col gap-3">
-                <?php foreach (array_slice($news, 1) as $idx => $item): ?>
-                    <a href="news.php?id=<?= $idx + 1 ?>" class="flex gap-3 group items-start">
+                <?php foreach (array_slice($news, 1) as $item): ?>
+                    <?php $itemUrl = !empty($item['slug']) ? 'news.php?slug=' . urlencode($item['slug']) : 'news.php?id=' . (int)$item['id']; ?>
+                    <a href="<?= e($itemUrl) ?>" class="flex gap-3 group items-start">
                         <div class="w-32 sm:w-40 aspect-video rounded-lg overflow-hidden shrink-0">
                             <img src="<?= e($item['image']) ?>" alt="<?= e($item['title']) ?>" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
                         </div>
@@ -270,7 +316,7 @@ $news = getNews();
         document.getElementById('countdown-s').textContent = String(totalSeconds % 60).padStart(2, '0');
     }, 1000);
 
-    function filterSection(gridId, brand, btn) {
+    function setActiveTab(btn) {
         const container = btn.parentElement;
         container.querySelectorAll('.tab-btn').forEach(b => {
             b.classList.remove('bg-gvn-red', 'text-white', 'border-gvn-red');
@@ -278,9 +324,24 @@ $news = getNews();
         });
         btn.classList.remove('bg-gray-50', 'text-gray-700', 'border-gray-200');
         btn.classList.add('bg-gvn-red', 'text-white', 'border-gvn-red');
+    }
 
+    function filterSection(gridId, brand, btn) {
+        setActiveTab(btn);
+        const brandLower = String(brand || '').toLowerCase();
         document.querySelectorAll(`#${gridId} .filter-item`).forEach(item => {
-            item.style.display = (brand === 'Tất cả' || item.dataset.brand === brand) ? 'block' : 'none';
+            const itemBrand = String(item.dataset.brand || '').toLowerCase();
+            item.style.display = (brand === 'Tất cả' || itemBrand === brandLower) ? 'block' : 'none';
+        });
+    }
+
+    function filterByText(gridId, keyword, btn) {
+        setActiveTab(btn);
+        const kwLower = String(keyword || '').toLowerCase();
+        document.querySelectorAll(`#${gridId} .filter-item`).forEach(item => {
+            const haystack = String(item.dataset.filterText || '').toLowerCase();
+            const matched = (kwLower === 'all') || haystack.includes(kwLower) || (kwLower === 'ryzen 5' && haystack.includes('r5'));
+            item.style.display = matched ? 'block' : 'none';
         });
     }
 </script>

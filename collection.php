@@ -2,16 +2,40 @@
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/data/store.php';
 
-$catSlug = $_GET['cat'] ?? 'all';
-$query = trim($_GET['q'] ?? '');
-$priceRange = $_GET['price'] ?? 'all';
-$brandFilter = $_GET['brand'] ?? 'all';
-$sort = $_GET['sort'] ?? 'default';
+$catSlug = trim((string)($_GET['cat'] ?? 'all'));
+if ($catSlug === '') {
+    $catSlug = 'all';
+}
+$query = trim((string)($_GET['q'] ?? ''));
+$priceRange = trim((string)($_GET['price'] ?? 'all'));
+$brandFilter = trim((string)($_GET['brand'] ?? 'all'));
+$brandId = max(0, (int)($_GET['brand_id'] ?? 0));
+$sort = trim((string)($_GET['sort'] ?? 'default'));
 $page = max(1, (int)($_GET['page'] ?? 1));
 $perPage = 10;
 
 $categories = getCategories();
+$brands = getBrands();
 $allProducts = getAllProducts();
+
+$selectedBrand = null;
+if ($brandId > 0) {
+    foreach ($brands as $b) {
+        if ((int)$b['id'] === $brandId) {
+            $selectedBrand = $b;
+            break;
+        }
+    }
+} elseif ($brandFilter !== '' && $brandFilter !== 'all') {
+    $bfLower = mb_strtolower($brandFilter, 'UTF-8');
+    foreach ($brands as $b) {
+        if (mb_strtolower((string)$b['slug'], 'UTF-8') === $bfLower || mb_strtolower((string)$b['name'], 'UTF-8') === $bfLower) {
+            $selectedBrand = $b;
+            $brandId = (int)$b['id'];
+            break;
+        }
+    }
+}
 
 $currentCat = ['name' => 'Tất cả sản phẩm', 'slug' => 'all'];
 foreach ($categories as $c) {
@@ -23,25 +47,53 @@ foreach ($categories as $c) {
 
 $products = $allProducts;
 if ($catSlug !== 'all') {
-    $filtered = array_values(array_filter($allProducts, fn($p) => $p['category'] === $catSlug));
-    if (!empty($filtered)) {
-        $products = $filtered;
-    }
+    $products = array_values(array_filter($allProducts, fn($p) => ($p['category'] ?? '') === $catSlug));
 }
 
 if ($query !== '') {
     $qLower = mb_strtolower($query, 'UTF-8');
-    $products = array_values(array_filter($products, fn($p) => str_contains(mb_strtolower($p['name'], 'UTF-8'), $qLower)));
+    $products = array_values(array_filter($products, function ($p) use ($qLower) {
+        $haystack = mb_strtolower(
+            ($p['name'] ?? '') . ' '
+            . implode(' ', (array)($p['specs'] ?? [])) . ' '
+            . ($p['brand'] ?? '') . ' '
+            . ($p['category_name'] ?? '') . ' '
+            . ($p['category_slug'] ?? '') . ' '
+            . ($p['description'] ?? ''),
+            'UTF-8'
+        );
+        return str_contains($haystack, $qLower);
+    }));
     $currentCat['name'] = 'Kết quả tìm kiếm: "' . $query . '"';
 }
 
-// Danh sách hãng có trong tập sản phẩm hiện tại
-$availableBrands = array_values(array_unique(array_map(fn($p) => $p['brand'], $products)));
-sort($availableBrands);
-
-// Lọc theo hãng
-if ($brandFilter !== 'all') {
-    $products = array_values(array_filter($products, fn($p) => $p['brand'] === $brandFilter));
+// Lọc theo hãng (hỗ trợ cả brand_id và brand theo tên/slug không phân biệt hoa thường)
+if ($selectedBrand !== null) {
+    $selectedNameLower = mb_strtolower((string)$selectedBrand['name'], 'UTF-8');
+    $selectedSlugLower = mb_strtolower((string)$selectedBrand['slug'], 'UTF-8');
+    $selectedId = (int)$selectedBrand['id'];
+    $products = array_values(array_filter($products, static function (array $p) use ($selectedId, $selectedNameLower, $selectedSlugLower): bool {
+        if ((int)($p['brand_id'] ?? 0) === $selectedId) {
+            return true;
+        }
+        $pBrandLower = mb_strtolower((string)($p['brand'] ?? ''), 'UTF-8');
+        $pBrandSlugLower = mb_strtolower((string)($p['brand_slug'] ?? ''), 'UTF-8');
+        return $pBrandLower === $selectedNameLower || ($pBrandSlugLower !== '' && $pBrandSlugLower === $selectedSlugLower);
+    }));
+    if ($catSlug === 'all' && $query === '') {
+        $currentCat['name'] = 'Thương hiệu: ' . $selectedBrand['name'];
+    }
+} elseif ($brandId > 0) {
+    $products = array_values(array_filter($products, fn($p) => (int)($p['brand_id'] ?? 0) === $brandId));
+} elseif ($brandFilter !== '' && $brandFilter !== 'all') {
+    $bfLower = mb_strtolower($brandFilter, 'UTF-8');
+    $products = array_values(array_filter($products, static function (array $p) use ($bfLower): bool {
+        return mb_strtolower((string)($p['brand'] ?? ''), 'UTF-8') === $bfLower
+            || mb_strtolower((string)($p['brand_slug'] ?? ''), 'UTF-8') === $bfLower;
+    }));
+    if ($catSlug === 'all' && $query === '') {
+        $currentCat['name'] = 'Thương hiệu: ' . $brandFilter;
+    }
 }
 
 // Lọc theo khoảng giá
@@ -73,6 +125,8 @@ $totalPages = max(1, (int)ceil($totalItems / $perPage));
 $page = min($page, $totalPages);
 $pagedProducts = array_slice($products, ($page - 1) * $perPage, $perPage);
 
+$hasActiveFilters = $priceRange !== 'all' || $brandId > 0 || ($brandFilter !== '' && $brandFilter !== 'all') || $sort !== 'default';
+
 $pageTitle = $currentCat['name'] . ' - ĐOÀN 6';
 require_once __DIR__ . '/includes/header.php';
 ?>
@@ -85,45 +139,77 @@ require_once __DIR__ . '/includes/header.php';
     </nav>
 
     <!-- Bộ lọc & Sắp xếp -->
-    <form method="GET" action="collection.php" class="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs">
+    <form method="GET" action="collection.php" class="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm space-y-3 text-xs">
         <input type="hidden" name="cat" value="<?= e($catSlug) ?>">
         <?php if ($query !== ''): ?>
             <input type="hidden" name="q" value="<?= e($query) ?>">
         <?php endif; ?>
 
-        <div class="flex flex-wrap items-center gap-2.5">
-            <span class="font-bold text-gray-700"><i class="fa-solid fa-filter text-gvn-red mr-1"></i> Bộ lọc:</span>
-            <select name="price" onchange="this.form.submit()" class="h-9 px-3 rounded-lg border border-gray-300 bg-gray-50 focus:outline-none focus:border-gvn-red">
-                <option value="all" <?= $priceRange === 'all' ? 'selected' : '' ?>>Tất cả mức giá</option>
-                <option value="under-5" <?= $priceRange === 'under-5' ? 'selected' : '' ?>>Dưới 5 triệu</option>
-                <option value="5-15" <?= $priceRange === '5-15' ? 'selected' : '' ?>>5 - 15 triệu</option>
-                <option value="15-25" <?= $priceRange === '15-25' ? 'selected' : '' ?>>15 - 25 triệu</option>
-                <option value="over-25" <?= $priceRange === 'over-25' ? 'selected' : '' ?>>Trên 25 triệu</option>
-            </select>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-2.5">
+                <span class="font-bold text-gray-700"><i class="fa-solid fa-filter text-gvn-red mr-1"></i> Bộ lọc:</span>
+                <select name="price" onchange="this.form.submit()" class="h-9 px-3 rounded-lg border border-gray-300 bg-gray-50 focus:outline-none focus:border-gvn-red">
+                    <option value="all" <?= $priceRange === 'all' ? 'selected' : '' ?>>Tất cả mức giá</option>
+                    <option value="under-5" <?= $priceRange === 'under-5' ? 'selected' : '' ?>>Dưới 5 triệu</option>
+                    <option value="5-15" <?= $priceRange === '5-15' ? 'selected' : '' ?>>5 - 15 triệu</option>
+                    <option value="15-25" <?= $priceRange === '15-25' ? 'selected' : '' ?>>15 - 25 triệu</option>
+                    <option value="over-25" <?= $priceRange === 'over-25' ? 'selected' : '' ?>>Trên 25 triệu</option>
+                </select>
 
-            <select name="brand" onchange="this.form.submit()" class="h-9 px-3 rounded-lg border border-gray-300 bg-gray-50 focus:outline-none focus:border-gvn-red">
-                <option value="all" <?= $brandFilter === 'all' ? 'selected' : '' ?>>Tất cả hãng / dòng</option>
-                <?php foreach ($availableBrands as $b): ?>
-                    <option value="<?= e($b) ?>" <?= $brandFilter === $b ? 'selected' : '' ?>><?= e($b) ?></option>
-                <?php endforeach; ?>
-            </select>
+                <select name="brand_id" onchange="this.form.submit()" class="h-9 px-3 rounded-lg border border-gray-300 bg-gray-50 focus:outline-none focus:border-gvn-red">
+                    <option value="0" <?= $brandId === 0 ? 'selected' : '' ?>>Tất cả thương hiệu</option>
+                    <?php foreach ($brands as $b): ?>
+                        <option value="<?= (int)$b['id'] ?>" <?= $brandId === (int)$b['id'] ? 'selected' : '' ?>>
+                            <?= e($b['name']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
 
-            <?php if ($priceRange !== 'all' || $brandFilter !== 'all' || $sort !== 'default'): ?>
-                <a href="collection.php?cat=<?= e($catSlug) ?><?= $query !== '' ? '&q=' . urlencode($query) : '' ?>" class="text-gvn-red font-semibold hover:underline ml-1">
-                    Xóa bộ lọc
+                <?php if ($hasActiveFilters): ?>
+                    <a href="collection.php?cat=<?= e($catSlug) ?><?= $query !== '' ? '&q=' . urlencode($query) : '' ?>" class="text-gvn-red font-semibold hover:underline ml-1">
+                        Xóa bộ lọc
+                    </a>
+                <?php endif; ?>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-gray-700">Sắp xếp:</span>
+                <select name="sort" onchange="this.form.submit()" class="h-9 px-3 rounded-lg border border-gray-300 bg-gray-50 focus:outline-none focus:border-gvn-red">
+                    <option value="default" <?= $sort === 'default' ? 'selected' : '' ?>>Nổi bật</option>
+                    <option value="price-asc" <?= $sort === 'price-asc' ? 'selected' : '' ?>>Giá thấp đến cao</option>
+                    <option value="price-desc" <?= $sort === 'price-desc' ? 'selected' : '' ?>>Giá cao đến thấp</option>
+                    <option value="discount" <?= $sort === 'discount' ? 'selected' : '' ?>>Giảm giá nhiều nhất</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Quick Brand Filter Pills -->
+        <?php if (!empty($brands)): ?>
+            <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-2 border-t border-gray-100">
+                <span class="text-[11px] font-bold text-gray-500 shrink-0 mr-1">Hãng:</span>
+                <?php
+                $baseParams = ['cat' => $catSlug];
+                if ($query !== '') $baseParams['q'] = $query;
+                if ($priceRange !== 'all') $baseParams['price'] = $priceRange;
+                if ($sort !== 'default') $baseParams['sort'] = $sort;
+                ?>
+                <a href="collection.php?<?= e(http_build_query($baseParams)) ?>"
+                   class="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition <?= ($brandId === 0 && ($brandFilter === '' || $brandFilter === 'all')) ? 'bg-gvn-red text-white border-gvn-red' : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-gvn-red' ?>">
+                    Tất cả
                 </a>
-            <?php endif; ?>
-        </div>
-
-        <div class="flex items-center gap-2">
-            <span class="font-bold text-gray-700">Sắp xếp:</span>
-            <select name="sort" onchange="this.form.submit()" class="h-9 px-3 rounded-lg border border-gray-300 bg-gray-50 focus:outline-none focus:border-gvn-red">
-                <option value="default" <?= $sort === 'default' ? 'selected' : '' ?>>Nổi bật</option>
-                <option value="price-asc" <?= $sort === 'price-asc' ? 'selected' : '' ?>>Giá thấp đến cao</option>
-                <option value="price-desc" <?= $sort === 'price-desc' ? 'selected' : '' ?>>Giá cao đến thấp</option>
-                <option value="discount" <?= $sort === 'discount' ? 'selected' : '' ?>>Giảm giá nhiều nhất</option>
-            </select>
-        </div>
+                <?php foreach ($brands as $b): ?>
+                    <?php
+                    $pillParams = $baseParams;
+                    $pillParams['brand_id'] = (int)$b['id'];
+                    $isActiveBrand = ($brandId === (int)$b['id']);
+                    ?>
+                    <a href="collection.php?<?= e(http_build_query($pillParams)) ?>"
+                       class="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition <?= $isActiveBrand ? 'bg-gvn-red text-white border-gvn-red' : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-gvn-red' ?>">
+                        <?= e($b['name']) ?>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
     </form>
 
     <div class="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm">

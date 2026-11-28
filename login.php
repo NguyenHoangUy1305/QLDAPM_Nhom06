@@ -2,8 +2,15 @@
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/data/store.php';
 
-if (!empty($_SESSION['user'])) {
-    header('Location: index.php');
+$rawRedirect = $_GET['redirect'] ?? $_POST['redirect'] ?? '';
+$safeRedirect = sanitizeRedirectPath($rawRedirect, '');
+
+$existingUser = currentUser();
+if ($existingUser !== null) {
+    $dest = $safeRedirect !== ''
+        ? $safeRedirect
+        : (hasRole('admin', 'staff') ? 'admin/index.php' : 'index.php');
+    header('Location: ' . $dest);
     exit;
 }
 
@@ -11,53 +18,41 @@ $error = '';
 $email = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
+    requireCsrf();
+
+    $email = trim((string)($_POST['email'] ?? ''));
+    $password = (string)($_POST['password'] ?? '');
 
     if ($email === '' || $password === '') {
         $error = 'Vui lòng nhập đầy đủ Email và Mật khẩu.';
     } else {
-        $userFound = null;
-
-        // 1. Kiểm tra trong MySQL nếu đã kết nối DB
         $pdo = getPDO();
-        if ($pdo) {
+        if (!$pdo) {
+            $error = 'Hệ thống cơ sở dữ liệu tạm thời gián đoạn. Vui lòng thử lại sau.';
+        } else {
             try {
-                $stmt = $pdo->prepare('SELECT id, name, email, phone, address, password, role FROM users WHERE email = ? LIMIT 1');
+                $stmt = $pdo->prepare('SELECT id, name, email, phone, address, password, role, status FROM users WHERE email = ? LIMIT 1');
                 $stmt->execute([$email]);
                 $row = $stmt->fetch();
-                if ($row && password_verify($password, $row['password'])) {
-                    $userFound = $row;
+
+                if ($row && password_verify($password, (string)$row['password'])) {
+                    if (($row['status'] ?? 'active') !== 'active') {
+                        $error = 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.';
+                    } else {
+                        session_regenerate_id(true);
+                        $cleanUser = syncUserSession($row);
+                        $dest = $safeRedirect !== ''
+                            ? $safeRedirect
+                            : (in_array($cleanUser['role'], ['admin', 'staff'], true) ? 'admin/index.php' : 'index.php');
+                        header('Location: ' . $dest);
+                        exit;
+                    }
+                } else {
+                    $error = 'Email hoặc mật khẩu không chính xác.';
                 }
             } catch (PDOException $e) {
-                // Bỏ qua nếu bảng users chưa tạo
+                $error = 'Không thể xác thực tài khoản lúc này. Vui lòng thử lại.';
             }
-        }
-
-        // 2. Fallback kiểm tra trong Session hoặc tài khoản demo
-        if (!$userFound) {
-            $sessionUsers = $_SESSION['registered_users'] ?? [];
-            if (isset($sessionUsers[$email]) && password_verify($password, $sessionUsers[$email]['password'])) {
-                $userFound = $sessionUsers[$email];
-            } elseif ($email === 'demo@doan6.local' && $password === '123456') {
-                $userFound = [
-                    'id' => 999,
-                    'name' => 'Tài khoản Demo Admin',
-                    'email' => 'demo@doan6.local',
-                    'phone' => '00000000',
-                    'address' => 'Khu vực Demo, TP. Hồ Chí Minh',
-                    'role' => 'admin',
-                ];
-            }
-        }
-
-        if ($userFound) {
-            unset($userFound['password']);
-            $_SESSION['user'] = $userFound;
-            header('Location: index.php');
-            exit;
-        } else {
-            $error = 'Email hoặc mật khẩu không chính xác.';
         }
     }
 }
@@ -79,6 +74,11 @@ require_once __DIR__ . '/includes/header.php';
         <?php endif; ?>
 
         <form method="POST" action="login.php" class="space-y-4">
+            <input type="hidden" name="csrf_token" value="<?= e(csrfToken()) ?>">
+            <?php if ($safeRedirect !== ''): ?>
+                <input type="hidden" name="redirect" value="<?= e($safeRedirect) ?>">
+            <?php endif; ?>
+
             <div>
                 <label class="block text-xs font-bold text-gray-700 mb-1">Email</label>
                 <input type="email" name="email" value="<?= e($email) ?>" required placeholder="nhapemail@example.com"
@@ -93,11 +93,6 @@ require_once __DIR__ . '/includes/header.php';
                 Đăng nhập
             </button>
         </form>
-
-        <div class="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-3 text-[11px] text-blue-800">
-            <strong>Tài khoản test nhanh:</strong><br>
-            Email: <code>demo@doan6.local</code> | Mật khẩu: <code>123456</code>
-        </div>
 
         <div class="mt-5 text-center text-xs text-gray-600">
             Chưa có tài khoản?
